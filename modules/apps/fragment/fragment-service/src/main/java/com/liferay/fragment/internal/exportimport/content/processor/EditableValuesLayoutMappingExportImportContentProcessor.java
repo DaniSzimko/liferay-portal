@@ -18,6 +18,9 @@ import com.liferay.exportimport.content.processor.ExportImportContentProcessor;
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerUtil;
 import com.liferay.fragment.entry.processor.constants.FragmentEntryProcessorConstants;
+import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
+import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
+import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.StagedModel;
@@ -139,6 +142,44 @@ public class EditableValuesLayoutMappingExportImportContentProcessor
 			return;
 		}
 
+		boolean contentPageTemplate = false;
+		boolean masterPageTemplate = false;
+
+		if (layout.isTypeContent()) {
+			LayoutPageTemplateEntry layoutPageTemplateEntry =
+				_layoutPageTemplateEntryLocalService.
+					fetchLayoutPageTemplateEntryByPlid(layout.getPlid());
+
+			if (layoutPageTemplateEntry == null) {
+				layoutPageTemplateEntry =
+					_layoutPageTemplateEntryLocalService.
+						fetchLayoutPageTemplateEntryByPlid(layout.getClassPK());
+			}
+
+			if (layoutPageTemplateEntry != null) {
+				if (layoutPageTemplateEntry.getType() ==
+						LayoutPageTemplateEntryTypeConstants.TYPE_BASIC) {
+
+					contentPageTemplate = true;
+				}
+
+				if (layoutPageTemplateEntry.getType() ==
+						LayoutPageTemplateEntryTypeConstants.
+							TYPE_MASTER_LAYOUT) {
+
+					masterPageTemplate = true;
+				}
+			}
+		}
+
+		if ((layout.isPrivateLayout() !=
+				portletDataContext.isPrivateLayout()) &&
+			!contentPageTemplate && !masterPageTemplate &&
+			!layout.isTypeAssetDisplay()) {
+
+			return;
+		}
+
 		layoutJSONObject.put("plid", layout.getPlid());
 
 		if (exportReferencedContent) {
@@ -189,5 +230,9 @@ public class EditableValuesLayoutMappingExportImportContentProcessor
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
+
+	@Reference
+	private LayoutPageTemplateEntryLocalService
+		_layoutPageTemplateEntryLocalService;
 
 }
