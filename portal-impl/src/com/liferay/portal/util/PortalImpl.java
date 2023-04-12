@@ -4944,10 +4944,16 @@ public class PortalImpl implements Portal {
 								portletScopeGroupId);
 
 						if (portletScopeGroup.isStagingGroup()) {
-							Group portletScopeLiveGroup =
-								portletScopeGroup.getLiveGroup();
+							if (!checkStagingGroup) {
+								Group portletScopeLiveGroup =
+									portletScopeGroup.getLiveGroup();
 
-							scopeGroupId = portletScopeLiveGroup.getGroupId();
+								scopeGroupId =
+									portletScopeLiveGroup.getGroupId();
+							}
+							else {
+								scopeGroupId = portletScopeGroupId;
+							}
 						}
 						else {
 							scopeGroupId = portletScopeGroup.getGroupId();
