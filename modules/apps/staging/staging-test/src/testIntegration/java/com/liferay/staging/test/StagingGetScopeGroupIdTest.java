@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.test.rule.Sync;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -146,7 +147,7 @@ public class StagingGetScopeGroupIdTest extends BaseLocalStagingTestCase {
 	}
 
 	private boolean _isStagedPortlet(String rootPortletId) {
-		return !rootPortletId.contains("Blog");
+		return !ArrayUtil.contains(getNotStagedPortletIds(), rootPortletId);
 	}
 
 	private void _testGetScopeGroupId(
