@@ -46,6 +46,107 @@ definition {
 		}
 	}
 
+	@description = "This is a use case for LPS-176997. TC-1: Verify MALU, APV and Scope are enabled on default instance when a LXC environment is being set up."
+	@priority = 5
+	test AssertAuditHeadersOnDefaultInstance {
+		property liferay.online.properties = "true";
+		property test.liferay.virtual.instance = "false";
+
+		task ("When: Get HTTP response headers in login state") {
+			var curl = '''http://localhost:8080/web/guest?SM_USER=test@liferay.com -I''';
+
+			var response = JSONCurlUtil.post(${curl});
+		}
+
+		task ("Then: Assert the values of X-Liferay-Request-Company and X-Liferay-Request-Group are companyId and groupId respectively and X-Liferay-Request-Guest-User is false.") {
+			var companyId = JSONCompany.getCompanyId();
+			var groupId = JSONGroupAPI._getGroupIdByName(
+				groupName = "Guest",
+				site = "true");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "X-Liferay-Request-Company: ${companyId}");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "X-Liferay-Request-Group: ${groupId}");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "X-Liferay-Request-Guest-User: false");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "X-Liferay-Request-User");
+		}
+
+		task ("And: Verify that the value of X-Liferay-Request-Guest-User is true in the unlogged-in state") {
+			var curl = '''http://localhost:8080/web/guest -I''';
+
+			var response = JSONCurlUtil.post(${curl});
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "X-Liferay-Request-Guest-User: true");
+		}
+	}
+
+	@description = "This is a use case for LPS-176997. TC-2: Verify MALU, APV and Scope are enabled on virtual instance when a LXC environment is being set up."
+	@priority = 5
+	test AssertAuditHeadersOnVirtualInstance {
+		property liferay.online.properties = "true";
+		property test.liferay.virtual.instance = "false";
+
+		task ("Given: Add a virtual instance") {
+			HeadlessPortalInstanceAPI.addPortalInstance(
+				domain = "www.able.com",
+				portalInstanceId = "www.able.com",
+				virtualHost = "www.able.com");
+
+			var companyId = JSONCompany.getCompanyId(portalInstanceName = "www.able.com");
+			var groupId = JSONGroupAPI._getGroupIdByName(
+				groupName = "Guest",
+				portalInstanceName = "www.able.com",
+				site = "true",
+				specificURL = "http://www.able.com:8080");
+		}
+
+		task ("When: Get HTTP response headers in login state") {
+			var curl = '''http://www.able.com:8080/web/guest?SM_USER=test@www.able.com -I''';
+
+			var response = JSONCurlUtil.post(${curl});
+		}
+
+		task ("Then: Assert the values of X-Liferay-Request-Company and X-Liferay-Request-Group are companyId and groupId respectively and X-Liferay-Request-Guest-User is false.") {
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "X-Liferay-Request-Company: ${companyId}");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "X-Liferay-Request-Group: ${groupId}");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "X-Liferay-Request-Guest-User: false");
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "X-Liferay-Request-User:");
+		}
+
+		task ("And: Verify that the value of X-Liferay-Request-Guest-User is true in the unlogged-in state") {
+			var curl = '''http://www.able.com:8080/web/guest -I''';
+
+			var response = JSONCurlUtil.post(${curl});
+
+			TestUtils.assertPartialEquals(
+				actual = ${response},
+				expected = "X-Liferay-Request-Guest-User: true");
+		}
+	}
+
 	@description = "This is a use case for LPS-155728. TC-1: Assert the email address is present in the audit log context in a human-readable format."
 	@priority = 2
 	test AssertEmailAddressIsPresentInReadable {
@@ -187,7 +288,6 @@ definition {
 	@description = "This is a use case for LPS-180465 TC-1 and TC-2. Verify Audit data could be filtered by Site ID and export Audit log with SiteIDs listed in the exported CSV file."
 	@priority = 5
 	test AuditDataCanBeFilteredBySiteID {
-		property custom.properties = "feature.flag.LPS-177194=true";
 		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config";
 		property osgi.module.configurations = "enabled=B\"true\"";
 		property test.liferay.virtual.instance = "false";
@@ -324,7 +424,6 @@ definition {
 	@description = "This is a use case for LPS-174421 TC-1. Verify that the user is able to export the filtered audit data as a CSV format file."
 	@priority = 5
 	test CanExportCSVFilteredAuditDataFile {
-		property custom.properties = "feature.flag.LPS-177194=true";
 		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config";
 		property osgi.module.configurations = "enabled=B\"true\"";
 		property test.liferay.virtual.instance = "false";
@@ -396,7 +495,6 @@ definition {
 	@description = "This is a use case for LPS-174421 TC-2. Verify that the user is able to export the filtered audit data as a CSV format file on virtual instance."
 	@priority = 5
 	test CanExportCSVFilteredAuditDataFileOnVirtualInstance {
-		property custom.properties = "feature.flag.LPS-177194=true";
 		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config";
 		property osgi.module.configurations = "enabled=B\"true\"";
 		property test.liferay.virtual.instance = "false";
@@ -465,7 +563,6 @@ definition {
 	@description = "This is a use case for LPS-180466 TC-1 and TC3. Verify that Audit event stores that specific event with the info of the site."
 	@priority = 5
 	test CanStoreSiteIDForAuditEvent {
-		property custom.properties = "feature.flag.LPS-177194=true";
 		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config";
 		property osgi.module.configurations = "enabled=B\"true\"";
 		property test.liferay.virtual.instance = "false";
@@ -582,7 +679,6 @@ definition {
 	@description = "This is a use case for LPS-180466 TC-2. Verify that Audit event stores that specific event with the info of the site on virtual instance."
 	@priority = 5
 	test CanStoreSiteIDForAuditEventOnVirtualInstance {
-		property custom.properties = "feature.flag.LPS-177194=true";
 		property osgi.module.configuration.file.names = "com.liferay.portal.security.audit.router.configuration.PersistentAuditMessageProcessorConfiguration.config";
 		property osgi.module.configurations = "enabled=B\"true\"";
 		property test.liferay.virtual.instance = "false";

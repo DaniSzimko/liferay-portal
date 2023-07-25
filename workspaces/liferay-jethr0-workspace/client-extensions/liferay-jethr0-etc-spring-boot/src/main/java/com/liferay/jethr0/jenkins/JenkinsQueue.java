@@ -24,22 +24,29 @@ import com.liferay.jethr0.jenkins.repository.JenkinsNodeRepository;
 import com.liferay.jethr0.jenkins.repository.JenkinsServerRepository;
 import com.liferay.jethr0.jenkins.server.JenkinsServer;
 import com.liferay.jethr0.jms.JMSEventHandler;
+import com.liferay.jethr0.util.StringUtil;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 
 /**
  * @author Michael Hashimoto
  */
 @Configuration
+@EnableScheduling
 public class JenkinsQueue {
 
 	public void initialize() {
 		if ((_jenkinsServerURLs != null) && !_jenkinsServerURLs.isEmpty()) {
 			for (String jenkinsServerURL : _jenkinsServerURLs.split(",")) {
 				JenkinsServer jenkinsServer = _jenkinsServerRepository.getByURL(
-					jenkinsServerURL);
+					StringUtil.toURL(jenkinsServerURL));
 
 				if (jenkinsServer != null) {
 					continue;
@@ -67,6 +74,21 @@ public class JenkinsQueue {
 	}
 
 	public void invoke() {
+		update();
+	}
+
+	public void setJmsEventHandler(JMSEventHandler jmsEventHandler) {
+		_jmsEventHandler = jmsEventHandler;
+	}
+
+	@Scheduled(cron = "${liferay.jethr0.jenkins.queue.update.cron}")
+	public void update() {
+		if (_log.isInfoEnabled()) {
+			_log.info("Updating Jenkins queue");
+		}
+
+		_buildQueue.sort();
+
 		for (JenkinsServer jenkinsServer : _jenkinsServerRepository.getAll()) {
 			for (JenkinsNode jenkinsNode : jenkinsServer.getJenkinsNodes()) {
 				if (!jenkinsNode.isAvailable()) {
@@ -85,6 +107,7 @@ public class JenkinsQueue {
 					build, BuildRun.State.QUEUED);
 
 				_jmsEventHandler.send(
+					jenkinsServer,
 					String.valueOf(buildRun.getInvokeJSONObject()));
 
 				_buildRepository.update(build);
@@ -93,9 +116,7 @@ public class JenkinsQueue {
 		}
 	}
 
-	public void setJmsEventHandler(JMSEventHandler jmsEventHandler) {
-		_jmsEventHandler = jmsEventHandler;
-	}
+	private static final Log _log = LogFactory.getLog(JenkinsQueue.class);
 
 	@Autowired
 	private BuildQueue _buildQueue;

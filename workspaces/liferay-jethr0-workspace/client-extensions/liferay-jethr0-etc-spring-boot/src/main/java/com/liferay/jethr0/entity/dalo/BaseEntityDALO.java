@@ -17,9 +17,11 @@ package com.liferay.jethr0.entity.dalo;
 import com.liferay.client.extension.util.spring.boot.LiferayOAuth2AccessTokenConfiguration;
 import com.liferay.jethr0.entity.Entity;
 import com.liferay.jethr0.entity.factory.EntityFactory;
+import com.liferay.jethr0.util.Retryable;
 import com.liferay.jethr0.util.StringUtil;
 import com.liferay.jethr0.util.ThreadUtil;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -55,8 +57,10 @@ public abstract class BaseEntityDALO<T extends Entity>
 		T entity = newEntity(responseJSONObject);
 
 		entity.setCreatedDate(
-			StringUtil.toDate(responseJSONObject.getString("dateCreated")));
+			_getDateFromJSON(responseJSONObject, "dateCreated"));
 		entity.setId(responseJSONObject.getLong("id"));
+		entity.setModifiedDate(
+			_getDateFromJSON(responseJSONObject, "dateModified"));
 
 		return entity;
 	}
@@ -70,8 +74,10 @@ public abstract class BaseEntityDALO<T extends Entity>
 		}
 
 		entity.setCreatedDate(
-			StringUtil.toDate(responseJSONObject.getString("dateCreated")));
+			_getDateFromJSON(responseJSONObject, "dateCreated"));
 		entity.setId(responseJSONObject.getLong("id"));
+		entity.setModifiedDate(
+			_getDateFromJSON(responseJSONObject, "dateModified"));
 
 		return entity;
 	}
@@ -110,6 +116,12 @@ public abstract class BaseEntityDALO<T extends Entity>
 		if (responseJSONObject == null) {
 			throw new RuntimeException("No response");
 		}
+
+		entity.setCreatedDate(
+			_getDateFromJSON(responseJSONObject, "dateCreated"));
+		entity.setId(responseJSONObject.getLong("id"));
+		entity.setModifiedDate(
+			_getDateFromJSON(responseJSONObject, "dateModified"));
 
 		return entity;
 	}
@@ -178,6 +190,8 @@ public abstract class BaseEntityDALO<T extends Entity>
 							exception.getMessage()));
 				}
 
+				_liferayOAuth2AccessTokenConfiguration.refresh();
+
 				ThreadUtil.sleep(_RETRY_DELAY_DURATION);
 			}
 		}
@@ -222,6 +236,8 @@ public abstract class BaseEntityDALO<T extends Entity>
 							objectEntryId, ". Retry in ", _RETRY_DELAY_DURATION,
 							"ms: ", exception.getMessage()));
 				}
+
+				_liferayOAuth2AccessTokenConfiguration.refresh();
 
 				ThreadUtil.sleep(_RETRY_DELAY_DURATION);
 			}
@@ -299,6 +315,8 @@ public abstract class BaseEntityDALO<T extends Entity>
 								exception.getMessage()));
 					}
 
+					_liferayOAuth2AccessTokenConfiguration.refresh();
+
 					ThreadUtil.sleep(_RETRY_DELAY_DURATION);
 				}
 			}
@@ -318,6 +336,19 @@ public abstract class BaseEntityDALO<T extends Entity>
 		}
 
 		return jsonObjects;
+	}
+
+	private Date _getDateFromJSON(JSONObject jsonObject, String dateKey) {
+		Retryable<Date> retryable = new Retryable<Date>() {
+
+			@Override
+			public Date execute() {
+				return StringUtil.toDate(jsonObject.optString(dateKey));
+			}
+
+		};
+
+		return retryable.executeWithRetries();
 	}
 
 	private String _getEntityLabel() {
@@ -404,6 +435,8 @@ public abstract class BaseEntityDALO<T extends Entity>
 							_RETRY_DELAY_DURATION, "ms: ",
 							exception.getMessage()));
 				}
+
+				_liferayOAuth2AccessTokenConfiguration.refresh();
 
 				ThreadUtil.sleep(_RETRY_DELAY_DURATION);
 			}

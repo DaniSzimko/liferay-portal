@@ -14,6 +14,7 @@
 
 import ClayForm, {ClayCheckbox, ClayInput} from '@clayui/form';
 import {useIsMounted} from '@liferay/frontend-js-react-web';
+import {useControlledState} from '@liferay/layout-js-components-web';
 import classNames from 'classnames';
 import {sub} from 'frontend-js-web';
 import PropTypes from 'prop-types';
@@ -23,7 +24,6 @@ import {PAGINATION_ERROR_MESSAGES} from '../../../../../../../app/config/constan
 import {config} from '../../../../../../../app/config/index';
 import CollectionService from '../../../../../../../app/services/CollectionService';
 import {WarningMessage} from '../../../../../../../common/components/WarningMessage';
-import useControlledState from '../../../../../../../common/hooks/useControlledState';
 import {useId} from '../../../../../../../common/hooks/useId';
 
 export function NoPaginationOptions({
@@ -136,6 +136,10 @@ export function NoPaginationOptions({
 						value={numberOfItems || ''}
 					/>
 
+					{numberOfItemsError && (
+						<WarningMessage message={numberOfItemsError} />
+					)}
+
 					<p className="mt-1 small text-secondary">
 						{sub(
 							Liferay.Language.get(
@@ -144,10 +148,6 @@ export function NoPaginationOptions({
 							config.searchContainerPageMaxDelta
 						)}
 					</p>
-
-					{numberOfItemsError && (
-						<WarningMessage message={numberOfItemsError} />
-					)}
 				</ClayForm.Group>
 			)}
 		</>

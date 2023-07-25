@@ -52,8 +52,10 @@ import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import java.text.ParseException;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -220,6 +222,55 @@ public class ContentFieldUtil {
 				};
 			}
 			else if (Objects.equals(
+						DDMFormFieldTypeConstants.GRID,
+						ddmFormField.getType())) {
+
+				Map<String, Object> properties = ddmFormField.getProperties();
+
+				DDMFormFieldOptions rowsDDMFormFieldOptions =
+					(DDMFormFieldOptions)properties.get("rows");
+				DDMFormFieldOptions columnsDDMFormFieldOptions =
+					(DDMFormFieldOptions)properties.get("columns");
+
+				JSONObject localizedSelectedDataJSONObject =
+					JSONFactoryUtil.createJSONObject();
+				JSONObject selectedValuesJSONObject =
+					JSONFactoryUtil.createJSONObject();
+
+				JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+					valueString);
+
+				Iterator<String> iterator = jsonObject.keys();
+
+				while (iterator.hasNext()) {
+					String key = iterator.next();
+
+					LocalizedValue optionKeyLabelsLocalizedValue =
+						rowsDDMFormFieldOptions.getOptionLabels(key);
+
+					String value = jsonObject.getString(key);
+
+					LocalizedValue optionValueLabelsLocalizedValue =
+						columnsDDMFormFieldOptions.getOptionLabels(value);
+
+					localizedSelectedDataJSONObject.put(
+						optionKeyLabelsLocalizedValue.getString(locale),
+						optionValueLabelsLocalizedValue.getString(locale));
+
+					selectedValuesJSONObject.put(
+						rowsDDMFormFieldOptions.getOptionReference(key),
+						columnsDDMFormFieldOptions.getOptionReference(value));
+				}
+
+				return new ContentFieldValue() {
+					{
+						setData(
+							JSONUtil.toString(localizedSelectedDataJSONObject));
+						setValue(JSONUtil.toString(selectedValuesJSONObject));
+					}
+				};
+			}
+			else if (Objects.equals(
 						DDMFormFieldType.IMAGE, ddmFormField.getType()) ||
 					 Objects.equals(
 						 DDMFormFieldTypeConstants.IMAGE,
@@ -330,12 +381,17 @@ public class ContentFieldUtil {
 				DDMFormFieldOptions ddmFormFieldOptions =
 					ddmFormField.getDDMFormFieldOptions();
 
-				List<String> values = TransformUtil.transform(
+				List<String> values = new ArrayList<>();
+
+				List<String> list = TransformUtil.transform(
 					JSONUtil.toStringList(
 						JSONFactoryUtil.createJSONArray(valueString)),
 					value -> {
 						LocalizedValue localizedValue =
 							ddmFormFieldOptions.getOptionLabels(value);
+
+						values.add(
+							ddmFormFieldOptions.getOptionReference(value));
 
 						return localizedValue.getString(locale);
 					});
@@ -343,6 +399,17 @@ public class ContentFieldUtil {
 				return new ContentFieldValue() {
 					{
 						setData(
+							() -> {
+								if (!ddmFormField.isMultiple() &&
+									(list.size() == 1)) {
+
+									return list.get(0);
+								}
+
+								return String.valueOf(
+									JSONFactoryUtil.createJSONArray(list));
+							});
+						setValue(
 							() -> {
 								if (!ddmFormField.isMultiple() &&
 									(values.size() == 1)) {
@@ -353,7 +420,6 @@ public class ContentFieldUtil {
 								return String.valueOf(
 									JSONFactoryUtil.createJSONArray(values));
 							});
-						setValue(valueString);
 					}
 				};
 			}
@@ -369,8 +435,12 @@ public class ContentFieldUtil {
 
 				return new ContentFieldValue() {
 					{
-						data = selectedOptionLabelLocalizedValue.getString(
-							locale);
+						setData(
+							selectedOptionLabelLocalizedValue.getString(
+								locale));
+						setValue(
+							ddmFormFieldOptions.getOptionReference(
+								valueString));
 					}
 				};
 			}

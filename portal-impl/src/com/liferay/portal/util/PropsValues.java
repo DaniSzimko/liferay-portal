@@ -146,6 +146,11 @@ public class PropsValues {
 		GetterUtil.getInteger(
 			PropsUtil.get(PropsKeys.ASSET_CATEGORIES_SELECTOR_MAX_ENTRIES));
 
+	public static final boolean ASSET_ENTRY_INCREMENT_VIEW_COUNTER_ENABLED =
+		GetterUtil.getBoolean(
+			PropsUtil.get(
+				PropsKeys.ASSET_ENTRY_INCREMENT_VIEW_COUNTER_ENABLED));
+
 	public static final int ASSET_FILTER_SEARCH_LIMIT = GetterUtil.getInteger(
 		PropsUtil.get(PropsKeys.ASSET_FILTER_SEARCH_LIMIT));
 
@@ -2389,8 +2394,6 @@ public class PropsValues {
 	public static final String UNICODE_TEXT_NORMALIZER_FORM = PropsUtil.get(
 		PropsKeys.UNICODE_TEXT_NORMALIZER_FORM);
 
-	public static final boolean UPGRADE_DATABASE_AUTO_RUN;
-
 	public static final boolean UPGRADE_DATABASE_TRANSACTIONS_DISABLED =
 		GetterUtil.getBoolean(
 			PropsUtil.get(PropsKeys.UPGRADE_DATABASE_TRANSACTIONS_DISABLED));
@@ -2629,14 +2632,6 @@ public class PropsValues {
 		for (int i = 0; i < LOGIN_FORM_NAVIGATION_PRE.length; i++) {
 			LOGIN_FORM_NAVIGATION_PRE[i] = TextFormatter.format(
 				LOGIN_FORM_NAVIGATION_PRE[i], TextFormatter.N);
-		}
-
-		if (JDBC_DEFAULT_DRIVER_CLASS_NAME.contains("hsql")) {
-			UPGRADE_DATABASE_AUTO_RUN = false;
-		}
-		else {
-			UPGRADE_DATABASE_AUTO_RUN = GetterUtil.getBoolean(
-				PropsUtil.get(PropsKeys.UPGRADE_DATABASE_AUTO_RUN));
 		}
 	}
 

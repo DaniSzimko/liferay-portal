@@ -181,13 +181,13 @@ public class CommerceInventoryBookedQuantityIndexerTest {
 		CommerceOrderItem commerceOrderItem =
 			_commerceOrderItemLocalService.addCommerceOrderItem(
 				_user.getUserId(), commerceOrder.getCommerceOrderId(),
-				cpInstance.getCPInstanceId(), null, 2, 0, 0, _commerceContext,
-				_serviceContext);
+				cpInstance.getCPInstanceId(), null, 2, 0, 0, StringPool.BLANK,
+				_commerceContext, _serviceContext);
 
 		CommerceInventoryBookedQuantity commerceInventoryBookedQuantity =
 			_commerceBookedQuantityLocalService.addCommerceBookedQuantity(
-				_user.getUserId(), cpInstance.getSku(), 2, null,
-				Collections.emptyMap());
+				_user.getUserId(), null, 2, cpInstance.getSku(),
+				StringPool.BLANK, Collections.emptyMap());
 
 		commerceOrderItem =
 			_commerceOrderItemLocalService.updateCommerceOrderItem(
@@ -237,13 +237,13 @@ public class CommerceInventoryBookedQuantityIndexerTest {
 		CommerceOrderItem commerceOrderItem =
 			_commerceOrderItemLocalService.addCommerceOrderItem(
 				_user.getUserId(), commerceOrder.getCommerceOrderId(),
-				cpInstance.getCPInstanceId(), null, 2, 0, 0, _commerceContext,
-				_serviceContext);
+				cpInstance.getCPInstanceId(), null, 2, 0, 0, StringPool.BLANK,
+				_commerceContext, _serviceContext);
 
 		CommerceInventoryBookedQuantity commerceInventoryBookedQuantity =
 			_commerceBookedQuantityLocalService.addCommerceBookedQuantity(
-				_user.getUserId(), cpInstance.getSku(), 2, null,
-				Collections.emptyMap());
+				_user.getUserId(), null, 2, cpInstance.getSku(),
+				StringPool.BLANK, Collections.emptyMap());
 
 		commerceOrderItem =
 			_commerceOrderItemLocalService.updateCommerceOrderItem(

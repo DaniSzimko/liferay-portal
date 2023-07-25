@@ -1,6 +1,7 @@
 @component-name = "portal-wcm"
 definition {
 
+	property ci.retries.disabled = "true";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testcase.url = "http://localhost:8080";
@@ -29,8 +30,6 @@ definition {
 	@description = "Assert Web Content created From Structure is published Via SAP"
 	@priority = 4
 	test AssertWebContentFromStructureNotBeDeletedOnLiveViaSAP {
-		property timeout.explicit.wait = "20";
-
 		task ("Create a basic web content") {
 			JSONWebcontent.addWebContent(
 				content = "WC Content",
@@ -266,7 +265,6 @@ definition {
 	@priority = 5
 	test PublishInStagingWebContentFromStructure {
 		property portal.acceptance = "true";
-		property timeout.explicit.wait = "20";
 
 		task ("Create a basic web content") {
 			JSONWebcontent.addWebContent(

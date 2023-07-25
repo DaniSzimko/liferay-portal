@@ -558,44 +558,49 @@ public class ObjectEntryLocalServiceImpl
 			_objectRelationshipPersistence.findByPrimaryKey(
 				objectRelationshipId);
 
-		ObjectDefinition relatedObjectDefinition =
-			_objectDefinitionPersistence.findByPrimaryKey(
-				objectRelationship.getObjectDefinitionId2());
-
 		if (!Objects.equals(
 				objectRelationship.getType(),
-				ObjectRelationshipConstants.TYPE_ONE_TO_MANY) ||
-			!relatedObjectDefinition.isUnmodifiableSystemObject()) {
+				ObjectRelationshipConstants.TYPE_ONE_TO_MANY)) {
 
 			throw new UnsupportedOperationException();
 		}
 
-		DynamicObjectDefinitionTable extensionDynamicObjectDefinitionTable =
-			_getExtensionDynamicObjectDefinitionTable(
+		DynamicObjectDefinitionTable dynamicObjectDefinitionTable = null;
+
+		ObjectDefinition objectDefinition =
+			_objectDefinitionPersistence.findByPrimaryKey(
+				objectRelationship.getObjectDefinitionId1());
+
+		ObjectDefinition relatedObjectDefinition =
+			_objectDefinitionPersistence.findByPrimaryKey(
 				objectRelationship.getObjectDefinitionId2());
-		FromStep fromStep = DSLQueryFactoryUtil.selectDistinct(
-			ObjectEntryTable.INSTANCE);
-		ObjectField objectField = _objectFieldPersistence.fetchByPrimaryKey(
-			objectRelationship.getObjectFieldId2());
 
-		Column<DynamicObjectDefinitionTable, Long> primaryKeyColumn =
-			extensionDynamicObjectDefinitionTable.getPrimaryKeyColumn();
+		if (relatedObjectDefinition.isUnmodifiableSystemObject()) {
+			dynamicObjectDefinitionTable =
+				_getExtensionDynamicObjectDefinitionTable(
+					objectRelationship.getObjectDefinitionId2());
+		}
+		else {
+			dynamicObjectDefinitionTable = _getDynamicObjectDefinitionTable(
+				relatedObjectDefinition.getObjectDefinitionId());
 
-		DSLQuery dslQuery = fromStep.from(
-			extensionDynamicObjectDefinitionTable
-		).innerJoinON(
-			ObjectEntryTable.INSTANCE,
-			ObjectEntryTable.INSTANCE.objectEntryId.eq(
-				(Expression<Long>)
-					extensionDynamicObjectDefinitionTable.getColumn(
-						objectField.getDBColumnName()))
-		).where(
-			primaryKeyColumn.eq(
-				primaryKey
-			).and(
-				ObjectEntryTable.INSTANCE.groupId.eq(groupId)
-			)
-		);
+			Column<DynamicObjectDefinitionTable, Long> column =
+				(Column<DynamicObjectDefinitionTable, Long>)
+					dynamicObjectDefinitionTable.getColumn(
+						StringBundler.concat(
+							"r_", objectRelationship.getName(), "_",
+							objectDefinition.getPKObjectFieldName()));
+
+			if (column == null) {
+				dynamicObjectDefinitionTable =
+					_getExtensionDynamicObjectDefinitionTable(
+						objectRelationship.getObjectDefinitionId2());
+			}
+		}
+
+		DSLQuery dslQuery = _getFetchManyToOneObjectEntryDSLQuery(
+			dynamicObjectDefinitionTable, groupId, objectRelationship,
+			primaryKey, dynamicObjectDefinitionTable.getPrimaryKeyColumn());
 
 		if (_log.isDebugEnabled()) {
 			_log.debug("Get one to many related object entries: " + dslQuery);
@@ -2057,6 +2062,32 @@ public class ObjectEntryLocalServiceImpl
 		);
 	}
 
+	private DSLQuery _getFetchManyToOneObjectEntryDSLQuery(
+		DynamicObjectDefinitionTable dynamicObjectDefinitionTable, long groupId,
+		ObjectRelationship objectRelationship, long primaryKey,
+		Column<DynamicObjectDefinitionTable, Long> primaryKeyColumn) {
+
+		FromStep fromStep = DSLQueryFactoryUtil.selectDistinct(
+			ObjectEntryTable.INSTANCE);
+		ObjectField objectField = _objectFieldPersistence.fetchByPrimaryKey(
+			objectRelationship.getObjectFieldId2());
+
+		return fromStep.from(
+			dynamicObjectDefinitionTable
+		).innerJoinON(
+			ObjectEntryTable.INSTANCE,
+			ObjectEntryTable.INSTANCE.objectEntryId.eq(
+				(Expression<Long>)dynamicObjectDefinitionTable.getColumn(
+					objectField.getDBColumnName()))
+		).where(
+			primaryKeyColumn.eq(
+				primaryKey
+			).and(
+				ObjectEntryTable.INSTANCE.groupId.eq(groupId)
+			)
+		);
+	}
+
 	private Expression<?> _getFunctionExpression(
 		Map<String, Object> objectFieldSettingsValues,
 		ObjectDefinition relatedObjectDefinition,
@@ -2259,8 +2290,8 @@ public class ObjectEntryLocalServiceImpl
 						return null;
 					}
 
-					return _inlineSQLHelper.getPermissionWherePredicate(
-						objectDefinition2.getClassName(),
+					return _getPermissionWherePredicate(
+						objectDefinition2,
 						dynamicObjectDefinitionTablePrimaryKeyColumn);
 				}
 			).and(
@@ -2455,35 +2486,10 @@ public class ObjectEntryLocalServiceImpl
 						return null;
 					}
 
-					ObjectDefinition objectDefinition2 =
+					return _getPermissionWherePredicate(
 						_objectDefinitionPersistence.findByPrimaryKey(
-							objectRelationship.getObjectDefinitionId2());
-
-					long[] groupIds = new long[0];
-
-					if (objectDefinition2.isAccountEntryRestricted()) {
-						PermissionChecker permissionChecker =
-							PermissionThreadLocal.getPermissionChecker();
-
-						groupIds = ListUtil.toLongArray(
-							_accountEntryLocalService.getUserAccountEntries(
-								permissionChecker.getUserId(),
-								AccountConstants.
-									PARENT_ACCOUNT_ENTRY_ID_DEFAULT,
-								null,
-								new String[] {
-									AccountConstants.
-										ACCOUNT_ENTRY_TYPE_BUSINESS,
-									AccountConstants.ACCOUNT_ENTRY_TYPE_PERSON
-								},
-								WorkflowConstants.STATUS_APPROVED,
-								QueryUtil.ALL_POS, QueryUtil.ALL_POS),
-							AccountEntry::getAccountEntryGroupId);
-					}
-
-					return _inlineSQLHelper.getPermissionWherePredicate(
-						objectDefinition2.getClassName(), primaryKeyColumn,
-						groupIds);
+							objectRelationship.getObjectDefinitionId2()),
+						primaryKeyColumn);
 				}
 			).and(
 				ObjectEntrySearchUtil.getRelatedModelsPredicate(
@@ -2542,6 +2548,34 @@ public class ObjectEntryLocalServiceImpl
 					permissionChecker.getUserId())
 			).withParentheses()
 		).withParentheses();
+	}
+
+	private Predicate _getPermissionWherePredicate(
+			ObjectDefinition objectDefinition,
+			Column<DynamicObjectDefinitionTable, Long> primaryKeyColumn)
+		throws PortalException {
+
+		long[] groupIds = new long[0];
+
+		if (objectDefinition.isAccountEntryRestricted()) {
+			PermissionChecker permissionChecker =
+				PermissionThreadLocal.getPermissionChecker();
+
+			groupIds = ListUtil.toLongArray(
+				_accountEntryLocalService.getUserAccountEntries(
+					permissionChecker.getUserId(),
+					AccountConstants.PARENT_ACCOUNT_ENTRY_ID_DEFAULT, null,
+					new String[] {
+						AccountConstants.ACCOUNT_ENTRY_TYPE_BUSINESS,
+						AccountConstants.ACCOUNT_ENTRY_TYPE_PERSON
+					},
+					WorkflowConstants.STATUS_APPROVED, QueryUtil.ALL_POS,
+					QueryUtil.ALL_POS),
+				AccountEntry::getAccountEntryGroupId);
+		}
+
+		return _inlineSQLHelper.getPermissionWherePredicate(
+			objectDefinition.getClassName(), primaryKeyColumn, groupIds);
 	}
 
 	private Object _getResult(

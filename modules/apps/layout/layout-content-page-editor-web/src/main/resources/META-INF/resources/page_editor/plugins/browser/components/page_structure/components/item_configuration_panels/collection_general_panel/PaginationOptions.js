@@ -13,6 +13,7 @@
  */
 
 import ClayForm, {ClayCheckbox, ClayInput} from '@clayui/form';
+import {useControlledState} from '@liferay/layout-js-components-web';
 import classNames from 'classnames';
 import {sub} from 'frontend-js-web';
 import PropTypes from 'prop-types';
@@ -21,7 +22,6 @@ import React, {useEffect, useState} from 'react';
 import {PAGINATION_ERROR_MESSAGES} from '../../../../../../../app/config/constants/paginationErrorMessages';
 import {config} from '../../../../../../../app/config/index';
 import {WarningMessage} from '../../../../../../../common/components/WarningMessage';
-import useControlledState from '../../../../../../../common/hooks/useControlledState';
 import {useId} from '../../../../../../../common/hooks/useId';
 
 export function PaginationOptions({
@@ -145,31 +145,9 @@ export function PaginationOptions({
 					value={numberOfItemsPerPage || ''}
 				/>
 
-				<div className="mb-2 mt-1">
-					<span
-						className={classNames(
-							'mr-1 small',
-							isMaximumValuePerPageError &&
-								numberOfItemsPerPageError
-								? 'text-warning'
-								: 'text-secondary',
-							{
-								'font-weight-bold':
-									isMaximumValuePerPageError &&
-									numberOfItemsPerPageError,
-							}
-						)}
-					>
-						{sub(
-							Liferay.Language.get('x-items-maximum'),
-							config.searchContainerPageMaxDelta
-						)}
-					</span>
-
-					{numberOfItemsPerPageError && (
-						<WarningMessage message={numberOfItemsPerPageError} />
-					)}
-				</div>
+				{numberOfItemsPerPageError && (
+					<WarningMessage message={numberOfItemsPerPageError} />
+				)}
 			</ClayForm.Group>
 		</>
 	);

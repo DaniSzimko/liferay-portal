@@ -20,6 +20,7 @@ import com.liferay.jethr0.gitbranch.GitBranch;
 import com.liferay.jethr0.task.Task;
 import com.liferay.jethr0.testsuite.TestSuite;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -55,6 +56,8 @@ public interface Project extends Entity {
 
 	public int getPriority();
 
+	public Date getStartDate();
+
 	public State getState();
 
 	public Set<Task> getTasks();
@@ -83,12 +86,14 @@ public interface Project extends Entity {
 
 	public void setPriority(int priority);
 
+	public void setStartDate(Date startDate);
+
 	public void setState(State state);
 
 	public enum State {
 
-		COMPLETED("completed"), EVALUATING("evaluating"), OPENED("opened"),
-		PREPARING("preparing"), QUEUED("queued"), RUNNING("running");
+		BLOCKED("blocked"), COMPLETED("completed"), OPENED("opened"),
+		QUEUED("queued"), RUNNING("running");
 
 		public static State get(JSONObject jsonObject) {
 			return getByKey(jsonObject.getString("key"));

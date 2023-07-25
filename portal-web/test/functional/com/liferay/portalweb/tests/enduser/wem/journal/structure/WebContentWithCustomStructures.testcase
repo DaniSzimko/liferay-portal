@@ -1,6 +1,7 @@
 @component-name = "portal-wcm"
 definition {
 
+	property ci.retries.disabled = "true";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.component.names = "Web Content Administration";
@@ -1603,7 +1604,6 @@ definition {
 	@priority = 5
 	test ViewAndEditAsWellAsDeleteContentWithTitleAndAllFields {
 		property portal.acceptance = "true";
-		property timeout.explicit.wait = "20";
 
 		task ("Add two widget pages") {
 			for (var i : list "1,2") {
@@ -1914,7 +1914,7 @@ definition {
 		}
 	}
 
-	@description = "This is a test for LPS-71204. Web content structure with localization cannot save garbage data in place of images."
+	@description = "This is a test for LPS-71204 and LPS-189318. Web content structure with localization cannot save garbage data in place of images."
 	@priority = 4
 	test ViewSourceContainsNoGarbageData {
 		property timeout.explicit.wait = "20";
@@ -1924,16 +1924,11 @@ definition {
 
 			NavItem.gotoStructures();
 
-			WebContentStructures.addCP(
-				structureDescription = "WC Structure Description",
-				structureName = "WC Structure Name");
+			WebContentStructures.addCP(structureName = "WC Structure Name");
+
+			DataEngine.addField(fieldName = "Text");
 
 			DataEngine.addField(
-				fieldFieldLabel = "Text",
-				fieldName = "Text");
-
-			DataEngine.addField(
-				fieldFieldLabel = "Image",
 				fieldLocation = 2,
 				fieldName = "Image");
 
@@ -1945,7 +1940,6 @@ definition {
 
 			WebContentTemplates.addCP(
 				structureName = "WC Structure Name",
-				templateDescription = "WC Template Description",
 				templateFieldNames = "Text,Image",
 				templateName = "WC Template Name");
 		}
@@ -1956,8 +1950,6 @@ definition {
 			WebContentNavigator.gotoAddWithStructureCP(structureName = "WC Structure Name");
 
 			WebContent.addWithStructureCP(
-				structureName = "WC Structure Name",
-				templateName = "WC Template Name",
 				webContentText = "Web Content Text",
 				webContentTitle = "Web Content Title");
 
@@ -2023,6 +2015,14 @@ definition {
 			LexiconEntry.gotoHeaderMenuItem(menuItem = "View Source");
 
 			AssertElementNotPresent(locator1 = "WC#SOURCE_GARBAGE_DATA");
+		}
+
+		task ("View the web content editor is rendered well after close the modal") {
+			IFrame.closeFrame();
+
+			WebContent.viewWithStructureCP(
+				predefinedValue = "true",
+				webContentText = "Web Content Text");
 		}
 	}
 

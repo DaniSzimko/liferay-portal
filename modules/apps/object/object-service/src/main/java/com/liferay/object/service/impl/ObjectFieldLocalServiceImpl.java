@@ -51,6 +51,7 @@ import com.liferay.object.petra.sql.dsl.DynamicObjectDefinitionTable;
 import com.liferay.object.petra.sql.dsl.DynamicObjectDefinitionTableUtil;
 import com.liferay.object.service.ObjectFieldSettingLocalService;
 import com.liferay.object.service.ObjectStateFlowLocalService;
+import com.liferay.object.service.ObjectValidationRuleLocalService;
 import com.liferay.object.service.ObjectViewLocalService;
 import com.liferay.object.service.base.ObjectFieldLocalServiceBaseImpl;
 import com.liferay.object.service.persistence.ObjectDefinitionPersistence;
@@ -70,6 +71,7 @@ import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.jdbc.CurrentConnection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.SystemEventConstants;
@@ -980,7 +982,8 @@ public class ObjectFieldLocalServiceImpl
 			throw new RequiredObjectFieldException();
 		}
 
-		if (objectDefinition.isApproved() && objectDefinition.isModifiable() &&
+		if (FeatureFlagManagerUtil.isEnabled("LPS-190890") &&
+			objectDefinition.isApproved() && objectDefinition.isModifiable() &&
 			objectDefinition.isSystem()) {
 
 			throw new UnsupportedOperationException();
@@ -1040,6 +1043,11 @@ public class ObjectFieldLocalServiceImpl
 		if (objectField.isState()) {
 			_objectStateFlowLocalService.deleteObjectFieldObjectStateFlow(
 				objectField.getObjectFieldId());
+		}
+
+		if (FeatureFlagManagerUtil.isEnabled("LPS-187846")) {
+			_objectValidationRuleLocalService.unassociateObjectField(
+				objectField);
 		}
 
 		_objectViewLocalService.unassociateObjectField(objectField);
@@ -1503,6 +1511,9 @@ public class ObjectFieldLocalServiceImpl
 
 	@Reference
 	private ObjectStateFlowLocalService _objectStateFlowLocalService;
+
+	@Reference
+	private ObjectValidationRuleLocalService _objectValidationRuleLocalService;
 
 	@Reference
 	private ObjectViewLocalService _objectViewLocalService;

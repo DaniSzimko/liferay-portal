@@ -24,6 +24,7 @@ import com.liferay.poshi.core.util.FileUtil;
 import com.liferay.poshi.core.util.GetterUtil;
 import com.liferay.poshi.core.util.PoshiProperties;
 import com.liferay.poshi.core.util.Validator;
+import com.liferay.poshi.runner.exception.PoshiRunnerWarningException;
 import com.liferay.poshi.runner.logger.PoshiLogger;
 import com.liferay.poshi.runner.logger.SummaryLogger;
 import com.liferay.poshi.runner.selenium.LiferaySeleniumUtil;
@@ -213,10 +214,10 @@ public class PoshiRunner {
 
 			throw webDriverException;
 		}
-		catch (Throwable throwable) {
+		catch (Exception exception) {
 			LiferaySeleniumUtil.printJavaProcessStacktrace();
 
-			throw _getException(throwable);
+			_throwException(exception);
 		}
 	}
 
@@ -231,10 +232,8 @@ public class PoshiRunner {
 				_runTearDown();
 			}
 		}
-		catch (Throwable throwable) {
-			Exception exception = _getException(throwable);
-
-			exception.printStackTrace();
+		catch (Exception exception) {
+			_throwException(exception);
 		}
 		finally {
 			if (_poshiProperties.proxyServerEnabled) {
@@ -245,6 +244,7 @@ public class PoshiRunner {
 
 			WebDriverUtil.stopWebDriver(_testNamespacedClassCommandName);
 
+			PoshiRunnerWarningException.clear();
 			PoshiStackTrace.clear(_testNamespacedClassCommandName);
 			PoshiVariablesContext.clear(_testNamespacedClassCommandName);
 			SummaryLogger.clear(_testNamespacedClassCommandName);
@@ -277,32 +277,15 @@ public class PoshiRunner {
 
 			LiferaySeleniumUtil.assertNoPoshiWarnings();
 		}
-		catch (Throwable throwable) {
+		catch (Exception exception) {
 			LiferaySeleniumUtil.printJavaProcessStacktrace();
 
-			Exception exception = _getException(throwable);
-
-			exception.printStackTrace();
-
-			throw exception;
+			_throwException(exception);
 		}
 	}
 
 	@Rule
 	public RetryTestRule retryTestRule = new RetryTestRule();
-
-	private Exception _getException(Throwable throwable) {
-		String poshiStackTrace = _poshiStackTrace.getStackTrace(
-			throwable.getMessage());
-
-		_poshiStackTrace.emptyStackTrace();
-
-		Exception exception = new Exception(poshiStackTrace);
-
-		exception.setStackTrace(throwable.getStackTrace());
-
-		return exception;
-	}
 
 	private void _runCommand() throws Exception {
 		_poshiLogger.logNamespacedClassCommandName(
@@ -357,6 +340,19 @@ public class PoshiRunner {
 		_summaryLogger.startMajorSteps();
 
 		_runNamespacedClassCommandName(_testNamespacedClassName + "#tear-down");
+	}
+
+	private void _throwException(Exception exception)
+		throws PoshiRunnerException {
+
+		PoshiRunnerException poshiRunnerException = new PoshiRunnerException(
+			exception, _poshiStackTrace);
+
+		_poshiStackTrace.emptyStackTrace();
+
+		poshiRunnerException.printStackTrace();
+
+		throw poshiRunnerException;
 	}
 
 	private static DataGuardClient _dataGuardClient;

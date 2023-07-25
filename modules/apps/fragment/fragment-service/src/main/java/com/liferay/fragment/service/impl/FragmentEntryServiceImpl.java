@@ -551,16 +551,15 @@ public class FragmentEntryServiceImpl extends FragmentEntryServiceBaseImpl {
 		long groupId, long fragmentCollectionId, String name, int status) {
 
 		return DSLQueryFactoryUtil.selectDistinct(
-			FragmentCompositionTable.INSTANCE.fragmentCompositionId.as(
-				"fragmentCompositionId"),
+			FragmentCompositionTable.INSTANCE.fragmentCompositionId,
 			new Scalar<>(
 				0L
 			).as(
 				"fragmentEntryId"
 			),
-			FragmentCompositionTable.INSTANCE.createDate.as("createDate"),
-			FragmentCompositionTable.INSTANCE.modifiedDate.as("modifiedDate"),
-			FragmentCompositionTable.INSTANCE.name.as("name")
+			FragmentCompositionTable.INSTANCE.createDate,
+			FragmentCompositionTable.INSTANCE.modifiedDate,
+			FragmentCompositionTable.INSTANCE.name
 		).from(
 			FragmentCompositionTable.INSTANCE
 		).where(
@@ -576,7 +575,7 @@ public class FragmentEntryServiceImpl extends FragmentEntryServiceBaseImpl {
 							FragmentCompositionTable.INSTANCE.name
 						).like(
 							_customSQL.keywords(
-								name, false, WildcardMode.SURROUND)[0]
+								name, true, WildcardMode.SURROUND)[0]
 						);
 					}
 
@@ -604,10 +603,10 @@ public class FragmentEntryServiceImpl extends FragmentEntryServiceBaseImpl {
 			).as(
 				"fragmentCompositionId"
 			),
-			FragmentEntryTable.INSTANCE.fragmentEntryId.as("fragmentEntryId"),
-			FragmentEntryTable.INSTANCE.createDate.as("createDate"),
-			FragmentEntryTable.INSTANCE.modifiedDate.as("modifiedDate"),
-			FragmentEntryTable.INSTANCE.name.as("name")
+			FragmentEntryTable.INSTANCE.fragmentEntryId,
+			FragmentEntryTable.INSTANCE.createDate,
+			FragmentEntryTable.INSTANCE.modifiedDate,
+			FragmentEntryTable.INSTANCE.name
 		).from(
 			FragmentEntryTable.INSTANCE
 		).where(
@@ -630,7 +629,7 @@ public class FragmentEntryServiceImpl extends FragmentEntryServiceBaseImpl {
 							FragmentEntryTable.INSTANCE.name
 						).like(
 							_customSQL.keywords(
-								name, false, WildcardMode.SURROUND)[0]
+								name, true, WildcardMode.SURROUND)[0]
 						);
 					}
 

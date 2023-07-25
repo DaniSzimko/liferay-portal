@@ -48,7 +48,7 @@ public class BuildQueue {
 
 		_sortedBuilds.add(build);
 
-		_sort();
+		sort();
 	}
 
 	public void addBuilds(Set<Build> builds) {
@@ -64,7 +64,7 @@ public class BuildQueue {
 
 		_sortedBuilds.addAll(builds);
 
-		_sort();
+		sort();
 	}
 
 	public void addProject(Project project) {
@@ -76,11 +76,13 @@ public class BuildQueue {
 			_projectQueue.addProject(project);
 		}
 
-		_sort();
+		sort();
 	}
 
 	public List<Build> getBuilds() {
-		return _sortedBuilds;
+		synchronized (_sortedBuilds) {
+			return _sortedBuilds;
+		}
 	}
 
 	public ProjectQueue getProjectQueue() {
@@ -97,7 +99,7 @@ public class BuildQueue {
 			}
 		}
 
-		_sort();
+		sort();
 
 		for (Build build : getBuilds()) {
 			System.out.println(build);
@@ -127,7 +129,31 @@ public class BuildQueue {
 	public void setProjectQueue(ProjectQueue projectQueue) {
 		_projectQueue = projectQueue;
 
-		_sort();
+		sort();
+	}
+
+	public void sort() {
+		synchronized (_sortedBuilds) {
+			_sortedBuilds.clear();
+
+			_projectQueue.sort();
+
+			for (Project project : _projectQueue.getProjects()) {
+				List<Build> builds = new ArrayList<>(project.getBuilds());
+
+				builds.removeAll(Collections.singleton(null));
+
+				Collections.sort(builds, new ParentBuildComparator());
+
+				for (Build build : builds) {
+					if ((build.getState() == Build.State.BLOCKED) ||
+						(build.getState() == Build.State.OPENED)) {
+
+						_sortedBuilds.add(build);
+					}
+				}
+			}
+		}
 	}
 
 	public static class ParentBuildComparator implements Comparator<Build> {
@@ -145,28 +171,6 @@ public class BuildQueue {
 			return 0;
 		}
 
-	}
-
-	private void _sort() {
-		_sortedBuilds.clear();
-
-		_projectQueue.sort();
-
-		for (Project project : _projectQueue.getProjects()) {
-			List<Build> builds = new ArrayList<>(project.getBuilds());
-
-			builds.removeAll(Collections.singleton(null));
-
-			Collections.sort(builds, new ParentBuildComparator());
-
-			for (Build build : builds) {
-				if (build.getState() != Build.State.OPENED) {
-					continue;
-				}
-
-				_sortedBuilds.add(build);
-			}
-		}
 	}
 
 	@Autowired

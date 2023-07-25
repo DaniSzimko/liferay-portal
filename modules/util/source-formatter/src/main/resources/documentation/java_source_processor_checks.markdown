@@ -166,6 +166,7 @@ JavaUpgradeConnectionCheck | [Bug Prevention](bug_prevention_checks.markdown#bug
 JavaUpgradeEmptyLinesCheck | [Styling](styling_checks.markdown#styling-checks) | Finds missing and unnecessary empty lines in Upgrade classes. |
 [JavaUpgradeIndexCheck](check/java_upgrade_index_check.markdown#javaupgradeindexcheck) | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | Finds cases where the service builder indexes are updated manually in Upgrade classes. This is not needed because Liferay takes care of it. |
 JavaUpgradeModelPermissionsCheck | [Upgrade](upgrade_checks.markdown#upgrade-checks) | Replace setGroupPermissions and setGuestPermissions by new implementation |
+JavaUpgradeOnAfterUpdateParameterCheck | [Upgrade](upgrade_checks.markdown#upgrade-checks) | Add new parameter in method onAfterUpdate for classes extending the BaseModelListener |
 JavaUpgradeProcessFactoryCheck | [Styling](styling_checks.markdown#styling-checks) | Sorts and groups method calls. |
 JavaUpgradeServiceTrackerListCheck | [Upgrade](upgrade_checks.markdown#upgrade-checks) | Replace the number of generic type arguments in ServiceTrackerList |
 JavaUpgradeVersionCheck | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | Verifies that the correct upgrade versions are used in classes that implement `UpgradeStepRegistrator`. |
@@ -237,6 +238,7 @@ SelfReferenceCheck | [Bug Prevention](bug_prevention_checks.markdown#bug-prevent
 SemiColonCheck | [Styling](styling_checks.markdown#styling-checks) | Finds cases of unnecessary semicolon. |
 [ServiceComponentRuntimeCheck](check/service_component_runtime_check.markdown#servicecomponentruntimecheck) | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | Checks `ServiceComponentRuntime` usage in test classes. |
 [ServiceProxyFactoryCheck](check/service_proxy_factory_check.markdown#serviceproxyfactorycheck) | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | Finds incorrect parameter in method call. |
+ServiceUpdateCheck | [Bug Prevention](bug_prevention_checks.markdown#bug-prevention-checks) | Checks that there are no stale references in service code from service updates. |
 SessionKeysCheck | [Naming Conventions](naming_conventions_checks.markdown#naming-conventions-checks) | Checks that messages send to `SessionsErrors` or `SessionMessages` follow naming conventions. |
 SetUtilMethodsCheck | [Performance](performance_checks.markdown#performance-checks) | Finds cases of inefficient SetUtil operations. |
 SingleStatementClauseCheck | [Styling](styling_checks.markdown#styling-checks) | Verifies that `for`, `if` or `while` statement always uses curly braces. |

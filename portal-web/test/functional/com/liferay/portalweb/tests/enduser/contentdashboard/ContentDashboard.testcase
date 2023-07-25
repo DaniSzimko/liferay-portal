@@ -1,6 +1,7 @@
 @component-name = "portal-content-dashboard"
 definition {
 
+	property ci.retries.disabled = "true";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Content Dashboard";
@@ -11,6 +12,8 @@ definition {
 		User.firstLoginPG();
 
 		HeadlessSite.addSite(siteName = "Test Site Name");
+
+		Category.openCategoriesAdmin(siteURLKey = "test-site-name");
 	}
 
 	tearDown {

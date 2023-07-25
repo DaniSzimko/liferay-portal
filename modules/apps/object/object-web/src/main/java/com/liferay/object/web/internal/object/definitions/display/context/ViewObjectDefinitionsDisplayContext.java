@@ -87,19 +87,22 @@ public class ViewObjectDefinitionsDisplayContext {
 		return creationMenu;
 	}
 
+	public String getEditObjectDefinitionURL() throws Exception {
+		return PortletURLBuilder.create(
+			getPortletURL()
+		).setMVCRenderCommandName(
+			"/object_definitions/edit_object_definition"
+		).setParameter(
+			"objectDefinitionId", "{id}"
+		).buildString();
+	}
+
 	public List<FDSActionDropdownItem> getFDSActionDropdownItems()
 		throws Exception {
 
 		return Arrays.asList(
 			new FDSActionDropdownItem(
-				PortletURLBuilder.create(
-					getPortletURL()
-				).setMVCRenderCommandName(
-					"/object_definitions/edit_object_definition"
-				).setParameter(
-					"objectDefinitionId", "{id}"
-				).buildString(),
-				"view", "view",
+				getEditObjectDefinitionURL(), "view", "view",
 				LanguageUtil.get(_objectRequestHelper.getRequest(), "view"),
 				"get", null, null),
 			new FDSActionDropdownItem(
@@ -119,7 +122,7 @@ public class ViewObjectDefinitionsDisplayContext {
 				LanguageUtil.get(_objectRequestHelper.getRequest(), "delete"),
 				"delete", "delete", null),
 			new FDSActionDropdownItem(
-				_getPermissionsURL(), null, "permissions",
+				_getPermissionsURL(), "password-policies", "permissions",
 				LanguageUtil.get(
 					_objectRequestHelper.getRequest(), "permissions"),
 				"get", "permissions", "modal-permissions"));
