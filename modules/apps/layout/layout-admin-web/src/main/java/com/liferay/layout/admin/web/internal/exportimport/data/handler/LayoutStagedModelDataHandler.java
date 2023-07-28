@@ -56,6 +56,8 @@ import com.liferay.layout.service.LayoutLocalizationLocalService;
 import com.liferay.layout.util.LayoutCopyHelper;
 import com.liferay.layout.utility.page.model.LayoutUtilityPageEntry;
 import com.liferay.layout.utility.page.service.LayoutUtilityPageEntryLocalService;
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
+import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
@@ -66,6 +68,7 @@ import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.NoSuchLayoutException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
@@ -86,6 +89,7 @@ import com.liferay.portal.kernel.model.LayoutTypePortlet;
 import com.liferay.portal.kernel.model.LayoutTypePortletConstants;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.model.PortletPreferences;
+import com.liferay.portal.kernel.model.StagedModel;
 import com.liferay.portal.kernel.model.adapter.StagedTheme;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.repository.model.FileEntry;
@@ -147,6 +151,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
+import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -287,9 +292,18 @@ public class LayoutStagedModelDataHandler
 	}
 
 	@Activate
-	protected void activate(Map<String, Object> properties) {
+	protected void activate(
+		Map<String, Object> properties, BundleContext bundleContext) {
+
 		_layoutExportImportConfiguration = ConfigurableUtil.createConfigurable(
 			LayoutExportImportConfiguration.class, properties);
+
+		_environmentSpecificPortletIdsExportImportProcessors =
+			ServiceTrackerListFactory.open(
+				bundleContext,
+				(Class<ExportImportContentProcessor<String>>)
+					(Class<?>)ExportImportContentProcessor.class,
+				"(content.processor.type=EnvironmentSpecificPortletIds)");
 	}
 
 	@Override
@@ -845,16 +859,16 @@ public class LayoutStagedModelDataHandler
 			_importLinkedLayout(
 				importedLayout, layout, layoutElement, portletDataContext);
 
-			_updateTypeSettings(importedLayout, layout);
+			_updateTypeSettings(importedLayout, layout, portletDataContext);
 		}
 		else if (layout.isTypeURL()) {
 			_importLinkedURL(
 				importedLayout, layout, layoutElement, portletDataContext);
 
-			_updateTypeSettings(importedLayout, layout);
+			_updateTypeSettings(importedLayout, layout, portletDataContext);
 		}
 		else {
-			_updateTypeSettings(importedLayout, layout);
+			_updateTypeSettings(importedLayout, layout, portletDataContext);
 		}
 
 		if (layoutsImportMode.equals(
@@ -2784,6 +2798,30 @@ public class LayoutStagedModelDataHandler
 			"layout-prototype-global", String.valueOf(layoutPrototypeGlobal));
 	}
 
+	private String _replacePortletIds(
+		PortletDataContext portletDataContext, StagedModel stagedModel,
+		String content) {
+
+		for (ExportImportContentProcessor<String> exportImportContentProcessor :
+				_environmentSpecificPortletIdsExportImportProcessors) {
+
+			try {
+				content =
+					exportImportContentProcessor.replaceImportContentReferences(
+						portletDataContext, stagedModel, content);
+			}
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(
+						"Unable to replace environment specific portlet IDs",
+						exception);
+				}
+			}
+		}
+
+		return content;
+	}
+
 	private void _resetLastMergeTime(Layout importedLayout, Layout layout)
 		throws Exception {
 
@@ -2894,7 +2932,9 @@ public class LayoutStagedModelDataHandler
 			importedLayoutTypeSettingsUnicodeProperties);
 	}
 
-	private void _updateTypeSettings(Layout importedLayout, Layout layout)
+	private void _updateTypeSettings(
+			Layout importedLayout, Layout layout,
+			PortletDataContext portletDataContext)
 		throws Exception {
 
 		long groupId = layout.getGroupId();
@@ -2935,6 +2975,13 @@ public class LayoutStagedModelDataHandler
 
 			importedLayout.setTypeSettingsProperties(
 				newTypeSettingsUnicodeProperties);
+
+			if (FeatureFlagManagerUtil.isEnabled("LPS-188873")) {
+				importedLayout.setTypeSettings(
+					_replacePortletIds(
+						portletDataContext, layout,
+						importedLayout.getTypeSettings()));
+			}
 		}
 		finally {
 			layout.setGroupId(groupId);
@@ -2975,6 +3022,9 @@ public class LayoutStagedModelDataHandler
 	@Reference(target = "(content.processor.type=DLReferences)")
 	private ExportImportContentProcessor<String>
 		_dlReferencesExportImportContentProcessor;
+
+	private ServiceTrackerList<ExportImportContentProcessor<String>>
+		_environmentSpecificPortletIdsExportImportProcessors;
 
 	@Reference
 	private ExportImportHelper _exportImportHelper;
