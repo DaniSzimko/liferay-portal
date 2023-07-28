@@ -12,8 +12,11 @@ import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.StagedModel;
 
 import org.osgi.framework.BundleContext;
@@ -80,6 +83,11 @@ public class FragmentEntryLinkExportImportContentProcessor
 		FragmentEntryLink fragmentEntryLink = (FragmentEntryLink)stagedModel;
 
 		if (fragmentEntryLink.isTypePortlet()) {
+			if (FeatureFlagManagerUtil.isEnabled("LPS-188873")) {
+				return _replacePortletIds(
+					portletDataContext, stagedModel, content);
+			}
+
 			return content;
 		}
 
@@ -134,6 +142,37 @@ public class FragmentEntryLinkExportImportContentProcessor
 				(Class<ExportImportContentProcessor<JSONObject>>)
 					(Class<?>)ExportImportContentProcessor.class,
 				"(content.processor.type=FragmentEntryLinkEditableValues)");
+
+		_envSpecificPortletIdsExportImportProcessors =
+			ServiceTrackerListFactory.open(
+				bundleContext,
+				(Class<ExportImportContentProcessor<String>>)
+					(Class<?>)ExportImportContentProcessor.class,
+				"(content.processor.type=EnvironmentSpecificPortletIds)");
+	}
+
+	private String _replacePortletIds(
+		PortletDataContext portletDataContext, StagedModel stagedModel,
+		String content) {
+
+		for (ExportImportContentProcessor<String> exportImportContentProcessor :
+				_envSpecificPortletIdsExportImportProcessors) {
+
+			try {
+				content =
+					exportImportContentProcessor.replaceImportContentReferences(
+						portletDataContext, stagedModel, content);
+			}
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(
+						"Unable to replace environment specific portlet IDs",
+						exception);
+				}
+			}
+		}
+
+		return content;
 	}
 
 	private static final String[] _FRAGMENT_ENTRY_PROCESSOR_KEYS = {
@@ -143,10 +182,15 @@ public class FragmentEntryLinkExportImportContentProcessor
 		FragmentEntryProcessorConstants.KEY_FREEMARKER_FRAGMENT_ENTRY_PROCESSOR
 	};
 
+	private static final Log _log = LogFactoryUtil.getLog(
+		FragmentEntryLinkExportImportContentProcessor.class);
+
 	@Reference(target = "(content.processor.type=DLReferences)")
 	private ExportImportContentProcessor<String>
 		_dlReferencesExportImportContentProcessor;
 
+	private ServiceTrackerList<ExportImportContentProcessor<String>>
+		_envSpecificPortletIdsExportImportProcessors;
 	private ServiceTrackerList<ExportImportContentProcessor<JSONObject>>
 		_fragmentEntryLinkEditableValuesExportImportProcessors;
 
