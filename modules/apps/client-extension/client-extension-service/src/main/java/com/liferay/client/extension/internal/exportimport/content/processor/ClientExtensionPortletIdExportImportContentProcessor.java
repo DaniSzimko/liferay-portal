@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2023 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -11,13 +11,13 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.StagedModel;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.liferay.portal.kernel.util.StringUtil;
 import org.osgi.service.component.annotations.Component;
 
 /**
@@ -42,8 +42,8 @@ public class ClientExtensionPortletIdExportImportContentProcessor
 
 	@Override
 	public String replaceImportContentReferences(
-			PortletDataContext portletDataContext, StagedModel stagedModel,
-			String content) {
+		PortletDataContext portletDataContext, StagedModel stagedModel,
+		String content) {
 
 		if (!content.contains(_PORTLET_ID_PREFIX)) {
 			return content;
@@ -78,7 +78,8 @@ public class ClientExtensionPortletIdExportImportContentProcessor
 		}
 
 		for (Map.Entry<String, String> entry : replaceStrings.entrySet()) {
-			content = StringUtil.replace(content,entry.getKey(),entry.getValue());
+			content = StringUtil.replace(
+				content, entry.getKey(), entry.getValue());
 		}
 
 		return content;
