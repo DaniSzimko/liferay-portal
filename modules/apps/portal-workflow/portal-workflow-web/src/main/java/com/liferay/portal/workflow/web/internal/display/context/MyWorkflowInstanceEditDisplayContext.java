@@ -11,6 +11,8 @@ import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManagerUtil;
+import com.liferay.portal.workflow.comparator.WorkflowComparatorFactory;
+import com.liferay.portal.workflow.manager.WorkflowLogManager;
 
 import java.util.List;
 
@@ -22,9 +24,13 @@ public class MyWorkflowInstanceEditDisplayContext
 
 	public MyWorkflowInstanceEditDisplayContext(
 		LiferayPortletRequest liferayPortletRequest,
-		LiferayPortletResponse liferayPortletResponse) {
+		LiferayPortletResponse liferayPortletResponse,
+		WorkflowComparatorFactory workflowComparatorFactory,
+		WorkflowLogManager workflowLogManager) {
 
-		super(liferayPortletRequest, liferayPortletResponse);
+		super(
+			liferayPortletRequest, liferayPortletResponse,
+			workflowComparatorFactory, workflowLogManager);
 	}
 
 	@Override

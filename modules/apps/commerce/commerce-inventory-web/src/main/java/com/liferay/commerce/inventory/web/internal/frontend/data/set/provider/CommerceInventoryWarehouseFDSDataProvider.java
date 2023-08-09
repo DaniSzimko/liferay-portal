@@ -19,6 +19,8 @@ import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 
+import java.math.BigDecimal;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,19 +63,47 @@ public class CommerceInventoryWarehouseFDSDataProvider
 			CommerceInventoryWarehouse commerceInventoryWarehouse =
 				commerceInventoryWarehouseItem.getCommerceInventoryWarehouse();
 
+			int stockQuantity = 0;
+
+			BigDecimal commerceInventoryWarehouseItemQuantity =
+				commerceInventoryWarehouseItem.getQuantity();
+
+			if (commerceInventoryWarehouseItemQuantity != null) {
+				stockQuantity =
+					commerceInventoryWarehouseItemQuantity.intValue();
+			}
+
+			int reservedQuantity = 0;
+
+			BigDecimal commerceInventoryWarehouseItemReservedQuantity =
+				commerceInventoryWarehouseItem.getReservedQuantity();
+
+			if (commerceInventoryWarehouseItemReservedQuantity != null) {
+				reservedQuantity =
+					commerceInventoryWarehouseItemReservedQuantity.intValue();
+			}
+
+			int replenishmentQuantity = 0;
+
+			BigDecimal commerceInventoryReplenishmentItemsCount =
+				_commerceInventoryReplenishmentItemService.
+					getCommerceInventoryReplenishmentItemsCount(
+						commerceInventoryWarehouse.
+							getCommerceInventoryWarehouseId(),
+						sku);
+
+			if (commerceInventoryReplenishmentItemsCount != null) {
+				replenishmentQuantity =
+					commerceInventoryReplenishmentItemsCount.intValue();
+			}
+
 			warehouses.add(
 				new Warehouse(
 					commerceInventoryWarehouseItem.
 						getCommerceInventoryWarehouseItemId(),
 					commerceInventoryWarehouse.getName(
 						_portal.getLocale(httpServletRequest)),
-					commerceInventoryWarehouseItem.getQuantity(),
-					commerceInventoryWarehouseItem.getReservedQuantity(),
-					_commerceInventoryReplenishmentItemService.
-						getCommerceInventoryReplenishmentItemsCount(
-							commerceInventoryWarehouse.
-								getCommerceInventoryWarehouseId(),
-							sku)));
+					stockQuantity, reservedQuantity, replenishmentQuantity));
 		}
 
 		return warehouses;

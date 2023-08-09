@@ -2811,8 +2811,7 @@ public class ObjectEntryLocalServiceImpl
 				for (String oDataFilterString : oDataFilterStrings) {
 					predicate = predicate.and(
 						_filterFactory.create(
-							oDataFilterString,
-							relatedObjectDefinition.getObjectDefinitionId()));
+							oDataFilterString, relatedObjectDefinition));
 				}
 
 				selectExpressions.add(
@@ -3558,8 +3557,7 @@ public class ObjectEntryLocalServiceImpl
 				String externalReferenceCode = String.valueOf(entry.getValue());
 
 				if (Validator.isNull(externalReferenceCode)) {
-					externalReferenceCode = String.valueOf(
-						objectEntry.getObjectEntryId());
+					externalReferenceCode = objectEntry.getUuid();
 				}
 
 				_validateExternalReferenceCode(

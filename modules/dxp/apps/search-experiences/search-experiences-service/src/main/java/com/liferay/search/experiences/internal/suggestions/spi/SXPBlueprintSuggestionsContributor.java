@@ -88,11 +88,14 @@ public class SXPBlueprintSuggestionsContributor
 			(Map<String, Object>)
 				suggestionsContributorConfiguration.getAttributes();
 
-		if ((attributes == null) || !attributes.containsKey("sxpBlueprintId")) {
+		if ((attributes == null) ||
+			(!attributes.containsKey("sxpBlueprintExternalReferenceCode") &&
+			 !attributes.containsKey("sxpBlueprintId"))) {
+
 			if (_log.isDebugEnabled()) {
 				_log.debug(
 					"Attributes do not contain search experiences blueprint " +
-						"ID");
+						"External Reference Code or ID");
 			}
 
 			return null;
@@ -109,6 +112,8 @@ public class SXPBlueprintSuggestionsContributor
 				searchContext,
 				GetterUtil.getInteger(
 					suggestionsContributorConfiguration.getSize(), 5),
+				MapUtil.getString(
+					attributes, "sxpBlueprintExternalReferenceCode"),
 				MapUtil.getLong(attributes, "sxpBlueprintId")));
 
 		SearchHits searchHits = searchResponse.getSearchHits();
@@ -273,7 +278,8 @@ public class SXPBlueprintSuggestionsContributor
 	}
 
 	private SearchRequest _getSearchRequest(
-		SearchContext searchContext1, int size, long sxpBlueprintId) {
+		SearchContext searchContext1, int size,
+		String sxpBlueprintExternalReferenceCode, long sxpBlueprintId) {
 
 		SearchRequestBuilder searchRequestBuilder =
 			_searchRequestBuilderFactory.builder();
@@ -290,6 +296,9 @@ public class SXPBlueprintSuggestionsContributor
 					SearchContextAttributes.ATTRIBUTE_KEY_EMPTY_SEARCH,
 					searchContext1.getAttribute(
 						SearchContextAttributes.ATTRIBUTE_KEY_EMPTY_SEARCH));
+				searchContext2.setAttribute(
+					"search.experiences.blueprint.external.reference.code",
+					sxpBlueprintExternalReferenceCode);
 				searchContext2.setAttribute(
 					"search.experiences.blueprint.id", sxpBlueprintId);
 				searchContext2.setAttribute(

@@ -376,6 +376,14 @@ public class CommerceProductServiceUpgradeStepRegistrator
 		registry.register(
 			"5.4.0", "5.5.0", CPInstanceUnitOfMeasureTable.create());
 
+		registry.register(
+			"5.5.0", "5.6.0",
+			UpgradeProcessFactory.addColumns(
+				"CPDefinitionOptionValueRel",
+				"unitOfMeasureKey VARCHAR(75) null"),
+			UpgradeProcessFactory.alterColumnType(
+				"CPDefinitionOptionValueRel", "quantity", "BIGDECIMAL null"));
+
 		if (_log.isInfoEnabled()) {
 			_log.info("Commerce product upgrade step registrator finished");
 		}

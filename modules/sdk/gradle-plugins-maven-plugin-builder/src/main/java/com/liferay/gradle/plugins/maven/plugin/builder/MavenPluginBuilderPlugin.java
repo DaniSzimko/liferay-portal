@@ -29,10 +29,11 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.BasePlugin;
+import org.gradle.api.plugins.JavaLibraryPlugin;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskContainer;
-import org.gradle.api.tasks.Upload;
 import org.gradle.api.tasks.javadoc.Javadoc;
 import org.gradle.external.javadoc.CoreJavadocOptions;
 
@@ -51,7 +52,7 @@ public class MavenPluginBuilderPlugin implements Plugin<Project> {
 
 	@Override
 	public void apply(Project project) {
-		GradleUtil.applyPlugin(project, JavaPlugin.class);
+		GradleUtil.applyPlugin(project, JavaLibraryPlugin.class);
 
 		Configuration mavenEmbedderConfiguration =
 			_addConfigurationMavenEmbedder(project);
@@ -70,7 +71,8 @@ public class MavenPluginBuilderPlugin implements Plugin<Project> {
 		}
 
 		_configureTasksBuildPluginDescriptor(project);
-		_configureTasksUpload(project, buildPluginDescriptorTask);
+		_configureTasksAbstractPublishToMaven(
+			project, buildPluginDescriptorTask);
 	}
 
 	private Configuration _addConfigurationMavenEmbedder(
@@ -313,6 +315,13 @@ public class MavenPluginBuilderPlugin implements Plugin<Project> {
 		return writeMavenSettingsTask;
 	}
 
+	private void _configureTaskAbstractPublishToMaven(
+		AbstractPublishToMaven abstractPublishToMaven,
+		BuildPluginDescriptorTask buildPluginDescriptorTask) {
+
+		abstractPublishToMaven.dependsOn(buildPluginDescriptorTask);
+	}
+
 	private void _configureTaskBuildPluginDescriptor(
 		BuildPluginDescriptorTask buildPluginDescriptorTask) {
 
@@ -328,6 +337,27 @@ public class MavenPluginBuilderPlugin implements Plugin<Project> {
 			(CoreJavadocOptions)javadoc.getOptions();
 
 		coreJavadocOptions.addStringOption("Xdoclint:none", "-quiet");
+	}
+
+	private void _configureTasksAbstractPublishToMaven(
+		Project project,
+		final BuildPluginDescriptorTask buildPluginDescriptorTask) {
+
+		TaskContainer taskContainer = project.getTasks();
+
+		taskContainer.withType(
+			AbstractPublishToMaven.class,
+			new Action<AbstractPublishToMaven>() {
+
+				@Override
+				public void execute(
+					AbstractPublishToMaven abstractPublishToMaven) {
+
+					_configureTaskAbstractPublishToMaven(
+						abstractPublishToMaven, buildPluginDescriptorTask);
+				}
+
+			});
 	}
 
 	private void _configureTasksBuildPluginDescriptor(Project project) {
@@ -361,30 +391,6 @@ public class MavenPluginBuilderPlugin implements Plugin<Project> {
 				}
 
 			});
-	}
-
-	private void _configureTasksUpload(
-		Project project,
-		final BuildPluginDescriptorTask buildPluginDescriptorTask) {
-
-		TaskContainer taskContainer = project.getTasks();
-
-		taskContainer.withType(
-			Upload.class,
-			new Action<Upload>() {
-
-				@Override
-				public void execute(Upload upload) {
-					_configureTaskUpload(upload, buildPluginDescriptorTask);
-				}
-
-			});
-	}
-
-	private void _configureTaskUpload(
-		Upload upload, BuildPluginDescriptorTask buildPluginDescriptorTask) {
-
-		upload.dependsOn(buildPluginDescriptorTask);
 	}
 
 	private File _getSrcDir(SourceDirectorySet sourceDirectorySet) {

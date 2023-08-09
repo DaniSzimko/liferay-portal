@@ -51,6 +51,7 @@ import com.liferay.commerce.service.CommerceOrderLocalService;
 import com.liferay.commerce.test.util.CommerceInventoryTestUtil;
 import com.liferay.commerce.test.util.CommerceTestUtil;
 import com.liferay.commerce.test.util.context.TestCommerceContext;
+import com.liferay.commerce.util.CommerceBigDecimalUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.model.Group;
@@ -202,8 +203,8 @@ public class CommerceOrderItemLocalServiceTest {
 		CommerceOrderItem commerceOrderItem =
 			_commerceOrderItemLocalService.addCommerceOrderItem(
 				_user.getUserId(), commerceOrder.getCommerceOrderId(),
-				cpInstance.getCPInstanceId(), null, 1, 0, 0, StringPool.BLANK,
-				_commerceContext, _serviceContext);
+				cpInstance.getCPInstanceId(), null, BigDecimal.ONE, 0, 0,
+				StringPool.BLANK, _commerceContext, _serviceContext);
 
 		_commerceOrderItems.add(commerceOrderItem);
 
@@ -275,8 +276,8 @@ public class CommerceOrderItemLocalServiceTest {
 		CommerceOrderItem commerceOrderItem =
 			_commerceOrderItemLocalService.addCommerceOrderItem(
 				_user.getUserId(), commerceOrder.getCommerceOrderId(),
-				cpInstance.getCPInstanceId(), null, 1, 0, 0, StringPool.BLANK,
-				_commerceContext, _serviceContext);
+				cpInstance.getCPInstanceId(), null, BigDecimal.ONE, 0, 0,
+				StringPool.BLANK, _commerceContext, _serviceContext);
 
 		_commerceOrderItems.add(commerceOrderItem);
 	}
@@ -333,8 +334,8 @@ public class CommerceOrderItemLocalServiceTest {
 		CommerceOrderItem commerceOrderItem =
 			_commerceOrderItemLocalService.addCommerceOrderItem(
 				_user.getUserId(), commerceOrder.getCommerceOrderId(),
-				cpInstance.getCPInstanceId(), null, 1, 0, 0, StringPool.BLANK,
-				_commerceContext, _serviceContext);
+				cpInstance.getCPInstanceId(), null, BigDecimal.ONE, 0, 0,
+				StringPool.BLANK, _commerceContext, _serviceContext);
 
 		_commerceOrderItems.add(commerceOrderItem);
 	}
@@ -489,12 +490,13 @@ public class CommerceOrderItemLocalServiceTest {
 		commerceOptionValues.add(
 			CommerceProductTestUtil.getCommerceOptionValue(
 				0, option1Key, _toValueKey(option1Key), option1Price,
-				CPConstants.PRODUCT_OPTION_PRICE_TYPE_STATIC, 2));
+				CPConstants.PRODUCT_OPTION_PRICE_TYPE_STATIC,
+				BigDecimal.valueOf(2)));
 
 		String option2Key = FriendlyURLNormalizerUtil.normalize(
 			RandomTestUtil.randomString());
 		BigDecimal option2Price = BigDecimal.valueOf(200);
-		int option2Quantity = 3;
+		BigDecimal option2Quantity = BigDecimal.valueOf(3);
 
 		commerceOptionValues.add(
 			CommerceProductTestUtil.getCommerceOptionValue(
@@ -531,7 +533,7 @@ public class CommerceOrderItemLocalServiceTest {
 				_user.getUserId(), _commerceInventoryWarehouse,
 				bundleCPInstance.getSku(), 100));
 
-		int quantity = 1;
+		BigDecimal quantity = BigDecimal.ONE;
 
 		CommerceOrderItem commerceOrderItem =
 			_commerceOrderItemLocalService.addCommerceOrderItem(
@@ -554,7 +556,8 @@ public class CommerceOrderItemLocalServiceTest {
 			commerceOrderItem.getCommerceOrderItemId(),
 			bundleOrderItem.getCommerceOrderItemId());
 
-		Assert.assertEquals(quantity, bundleOrderItem.getQuantity());
+		Assert.assertTrue(
+			CommerceBigDecimalUtil.eq(quantity, bundleOrderItem.getQuantity()));
 
 		Assert.assertEquals(option2Price, bundleOrderItem.getFinalPrice());
 
@@ -655,11 +658,11 @@ public class CommerceOrderItemLocalServiceTest {
 
 		CommerceOrderItem commerceOrderItem1 = commerceOrderItems.get(0);
 
-		int originalQuantity1 = commerceOrderItem1.getQuantity();
+		BigDecimal originalQuantity1 = commerceOrderItem1.getQuantity();
 
 		CommerceOrderItem commerceOrderItem2 = commerceOrderItems.get(1);
 
-		int originalQuantity2 = commerceOrderItem2.getQuantity();
+		BigDecimal originalQuantity2 = commerceOrderItem2.getQuantity();
 
 		CPInstance cpInstance;
 
@@ -673,8 +676,8 @@ public class CommerceOrderItemLocalServiceTest {
 		_commerceOrderItems.add(
 			_commerceOrderItemLocalService.addCommerceOrderItem(
 				_user.getUserId(), commerceOrder.getCommerceOrderId(),
-				cpInstance.getCPInstanceId(), null, 1, 0, 0, StringPool.BLANK,
-				_commerceContext, _serviceContext));
+				cpInstance.getCPInstanceId(), null, BigDecimal.ONE, 0, 0,
+				StringPool.BLANK, _commerceContext, _serviceContext));
 
 		commerceOrderItems = commerceOrder.getCommerceOrderItems();
 
@@ -684,8 +687,8 @@ public class CommerceOrderItemLocalServiceTest {
 		CommerceOrderItem commerceOrderItem3 =
 			_commerceOrderItemLocalService.addOrUpdateCommerceOrderItem(
 				_user.getUserId(), commerceOrder.getCommerceOrderId(),
-				cpInstance.getCPInstanceId(), "[]", 1, 0, 0, StringPool.BLANK,
-				_commerceContext, _serviceContext);
+				cpInstance.getCPInstanceId(), "[]", BigDecimal.ONE, 0, 0,
+				StringPool.BLANK, _commerceContext, _serviceContext);
 
 		commerceOrderItems = commerceOrder.getCommerceOrderItems();
 
@@ -697,7 +700,9 @@ public class CommerceOrderItemLocalServiceTest {
 		Assert.assertEquals(
 			originalQuantity2, commerceOrderItem2.getQuantity());
 
-		Assert.assertEquals(2, commerceOrderItem3.getQuantity());
+		Assert.assertTrue(
+			CommerceBigDecimalUtil.eq(
+				BigDecimal.valueOf(2), commerceOrderItem3.getQuantity()));
 
 		_commerceOrderItemLocalService.deleteCommerceOrderItem(
 			_user.getUserId(), commerceOrderItem3.getCommerceOrderItemId());
@@ -930,11 +935,12 @@ public class CommerceOrderItemLocalServiceTest {
 				updateCPDefinitionOptionValueRel(
 					optionCPDefinitionOptionValueRel.
 						getCPDefinitionOptionValueRelId(),
-					cpOptionValue.getNameMap(), cpOptionValue.getPriority(),
-					commerceOptionValue.getOptionValueKey(),
 					commerceOptionValue.getCPInstanceId(),
-					commerceOptionValue.getQuantity(), false,
-					commerceOptionValue.getPrice(), _serviceContext);
+					commerceOptionValue.getOptionValueKey(),
+					cpOptionValue.getNameMap(), false,
+					commerceOptionValue.getPrice(), cpOptionValue.getPriority(),
+					commerceOptionValue.getQuantity(), StringPool.BLANK,
+					_serviceContext);
 		}
 	}
 
@@ -1037,11 +1043,12 @@ public class CommerceOrderItemLocalServiceTest {
 		commerceOptionValues.add(
 			CommerceProductTestUtil.getCommerceOptionValue(
 				optionSKU1.getCPInstanceId(), option1Key,
-				_toValueKey(option1Key), option1DeltaPrice, priceType, 2));
+				_toValueKey(option1Key), option1DeltaPrice, priceType,
+				BigDecimal.valueOf(2)));
 
 		String option2Key = FriendlyURLNormalizerUtil.normalize(
 			FriendlyURLNormalizerUtil.normalize(RandomTestUtil.randomString()));
-		int option2Quantity = 3;
+		BigDecimal option2Quantity = BigDecimal.valueOf(3);
 
 		CommerceOptionValue testCommerceOptionValue =
 			CommerceProductTestUtil.getCommerceOptionValue(
@@ -1073,7 +1080,7 @@ public class CommerceOrderItemLocalServiceTest {
 			_user.getUserId(), _commerceInventoryWarehouse,
 			bundleCPInstance.getSku(), 100);
 
-		int quantity = 1;
+		BigDecimal quantity = BigDecimal.ONE;
 
 		CommerceOrderItem commerceOrderItem =
 			_commerceOrderItemLocalService.addCommerceOrderItem(
@@ -1115,7 +1122,7 @@ public class CommerceOrderItemLocalServiceTest {
 		}
 
 		expectedOrderFinalPrice = expectedOrderFinalPrice.multiply(
-			BigDecimal.valueOf(option2Quantity));
+			option2Quantity);
 
 		expectedOrderFinalPrice = expectedOrderFinalPrice.add(
 			bundleOrderItem.getFinalPrice());
@@ -1185,7 +1192,8 @@ public class CommerceOrderItemLocalServiceTest {
 				cpInstance1.getCPInstanceId(),
 				dynamicPriceTypeCPOption.getCPOptionId(),
 				CPConstants.PRODUCT_OPTION_PRICE_TYPE_DYNAMIC,
-				BigDecimal.valueOf(50), 1, true, true, _serviceContext);
+				BigDecimal.valueOf(50), BigDecimal.ONE, true, true,
+				_serviceContext);
 
 		_cpDefinitionOptionValueRels.add(cpDefinitionOptionValueRel);
 
@@ -1196,7 +1204,8 @@ public class CommerceOrderItemLocalServiceTest {
 				cpInstance2.getCPInstanceId(),
 				dynamicPriceTypeCPOption.getCPOptionId(),
 				CPConstants.PRODUCT_OPTION_PRICE_TYPE_DYNAMIC,
-				BigDecimal.valueOf(100), 1, true, true, _serviceContext));
+				BigDecimal.valueOf(100), BigDecimal.ONE, true, true,
+				_serviceContext));
 
 		_cpInstanceLocalService.buildCPInstances(
 			bundleCPDefinition.getCPDefinitionId(), _serviceContext);
@@ -1239,7 +1248,8 @@ public class CommerceOrderItemLocalServiceTest {
 			_commerceOrderItemLocalService.addCommerceOrderItem(
 				_user.getUserId(), commerceOrder.getCommerceOrderId(),
 				bundleCPInstanceWithUnavailableChildSKU.getCPInstanceId(), null,
-				1, 0, 1, StringPool.BLANK, _commerceContext, _serviceContext));
+				BigDecimal.ONE, 0, 1, StringPool.BLANK, _commerceContext,
+				_serviceContext));
 
 		commerceOrder = _commerceOrderLocalService.getCommerceOrder(
 			commerceOrder.getCommerceOrderId());
@@ -1310,7 +1320,7 @@ public class CommerceOrderItemLocalServiceTest {
 
 		_commerceOrders.add(commerceOrder);
 
-		int nonbundleQuantity = 10;
+		BigDecimal nonbundleQuantity = BigDecimal.TEN;
 
 		_commerceOrderItems.add(
 			_commerceOrderItemLocalService.addCommerceOrderItem(
@@ -1352,7 +1362,7 @@ public class CommerceOrderItemLocalServiceTest {
 		}
 
 		List<CommerceOptionValue> commerceOptionValues = new ArrayList<>();
-		int option1Quantity = 2;
+		BigDecimal option1Quantity = BigDecimal.valueOf(2);
 
 		commerceOptionValues.add(
 			CommerceProductTestUtil.getCommerceOptionValue(
@@ -1362,7 +1372,7 @@ public class CommerceOrderItemLocalServiceTest {
 
 		String option2Key = FriendlyURLNormalizerUtil.normalize(
 			RandomTestUtil.randomString());
-		int option2Quantity = 3;
+		BigDecimal option2Quantity = BigDecimal.valueOf(3);
 
 		commerceOptionValues.add(
 			CommerceProductTestUtil.getCommerceOptionValue(
@@ -1396,7 +1406,7 @@ public class CommerceOrderItemLocalServiceTest {
 				_user.getUserId(), _commerceInventoryWarehouse,
 				bundleCPInstance.getSku(), 100));
 
-		int quantity = 1;
+		BigDecimal quantity = BigDecimal.ONE;
 
 		CommerceOrderItem commerceOrderItem =
 			_commerceOrderItemLocalService.addCommerceOrderItem(
@@ -1437,15 +1447,14 @@ public class CommerceOrderItemLocalServiceTest {
 		}
 
 		expectedOrderFinalPrice = expectedOrderFinalPrice.multiply(
-			BigDecimal.valueOf(option1Quantity));
+			option1Quantity);
 
 		expectedOrderFinalPrice = expectedOrderFinalPrice.add(
 			bundleOrderItem.getFinalPrice());
 
 		BigDecimal nonbundleFinalPrice = optionSKU1PriceEntry.getPrice();
 
-		nonbundleFinalPrice = nonbundleFinalPrice.multiply(
-			BigDecimal.valueOf(nonbundleQuantity));
+		nonbundleFinalPrice = nonbundleFinalPrice.multiply(nonbundleQuantity);
 
 		expectedOrderFinalPrice = expectedOrderFinalPrice.add(
 			nonbundleFinalPrice);
@@ -1482,26 +1491,27 @@ public class CommerceOrderItemLocalServiceTest {
 			CommerceOrderItem childOrderItem)
 		throws Exception {
 
-		int originalBundleQuantity = bundleOrderItem.getQuantity();
+		BigDecimal originalBundleQuantity = bundleOrderItem.getQuantity();
+
+		BigDecimal quantity = originalBundleQuantity.multiply(
+			BigDecimal.valueOf(factor));
 
 		bundleOrderItem =
 			_commerceOrderItemLocalService.updateCommerceOrderItem(
 				_user.getUserId(), bundleOrderItem.getCommerceOrderItemId(),
-				originalBundleQuantity * factor, _commerceContext,
-				_serviceContext);
+				quantity, _commerceContext, _serviceContext);
 
-		Assert.assertEquals(
-			originalBundleQuantity * factor, bundleOrderItem.getQuantity());
+		Assert.assertEquals(quantity, bundleOrderItem.getQuantity());
 
-		int originalChildQuantity = childOrderItem.getQuantity();
+		BigDecimal originalChildQuantity = childOrderItem.getQuantity();
 
 		CommerceOrderItem updatedChildOrderItem =
 			_commerceOrderItemLocalService.getCommerceOrderItem(
 				childOrderItem.getCommerceOrderItemId());
 
-		Assert.assertEquals(
-			originalChildQuantity * factor,
-			updatedChildOrderItem.getQuantity());
+		quantity = originalChildQuantity.multiply(BigDecimal.valueOf(factor));
+
+		Assert.assertEquals(quantity, updatedChildOrderItem.getQuantity());
 
 		BigDecimal originalBundlePrice = bundleOrderItem.getFinalPrice();
 

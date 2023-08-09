@@ -63,6 +63,7 @@ import com.liferay.portal.kernel.struts.StrutsAction;
 import com.liferay.portal.kernel.upload.UploadServletRequest;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -264,8 +265,14 @@ public class EditInfoItemStrutsAction implements StrutsAction {
 				_log.debug(infoFormValidationException);
 			}
 
-			SessionErrors.add(
-				httpServletRequest, formItemId, infoFormValidationException);
+			if (!FeatureFlagManagerUtil.isEnabled("LPS-182728") ||
+				Validator.isNull(
+					infoFormValidationException.getInfoFieldUniqueId())) {
+
+				SessionErrors.add(
+					httpServletRequest, formItemId,
+					infoFormValidationException);
+			}
 
 			if (Validator.isNotNull(
 					infoFormValidationException.getInfoFieldUniqueId())) {
@@ -425,7 +432,13 @@ public class EditInfoItemStrutsAction implements StrutsAction {
 			return simpleDateFormat.format(infoFieldValue.getValue());
 		}
 
-		return String.valueOf(infoFieldValue.getValue());
+		Object value = infoFieldValue.getValue();
+
+		if (value instanceof List) {
+			return ListUtil.toString((List<?>)value, StringPool.BLANK);
+		}
+
+		return String.valueOf(value);
 	}
 
 	private boolean _hasCaptcha(

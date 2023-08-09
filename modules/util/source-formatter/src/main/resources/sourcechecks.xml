@@ -602,6 +602,10 @@
 			<category name="Styling" />
 			<description name="Applies rules to enforce consistency in code style." />
 		</check>
+		<check name="JavaUpgradeFetchCPDefinitionByCProductExternalReferenceCodeCheck">
+			<category name="Upgrade" />
+			<description name="Reorder parameters in the fetchCPDefinitionByCProductExternalReferenceCode method" />
+		</check>
 		<check name="JavaUpgradeModelPermissionsCheck">
 			<category name="Upgrade" />
 			<description name="Replace setGroupPermissions and setGuestPermissions by new implementation" />
@@ -826,6 +830,10 @@
 		<check name="JavaUpgradeClassCheck">
 			<category name="Bug Prevention" />
 			<description name="Performs several checks on Upgrade classes." />
+		</check>
+		<check name="JavaUpgradeCommerceShippingOptionCheck">
+			<category name="Upgrade" />
+			<description name="Replace and reorder parameters in the CommerceShippingOption instance." />
 		</check>
 		<check name="JavaUpgradeConnectionCheck">
 			<category name="Bug Prevention" />
@@ -1112,9 +1120,9 @@
 			<category name="Bug Prevention" />
 			<description name="Performs several checks on tag attributes." />
 		</check>
-		<check name="JSPTaglibAttributesCheck">
+		<check name="JSPTaglibMissingAttributesCheck">
 			<category name="Bug Prevention" />
-			<description name="Performs several checks on taglib attributes." />
+			<description name="Checks for missing taglib attributes." />
 			<property name="enabled" value="false" />
 		</check>
 		<check name="JSPTaglibVariableCheck">
@@ -1593,6 +1601,14 @@
 			<description name="Checks if the property value `-includeresource` or `Include-Resource` exists and removes it" />
 			<weight>1</weight>
 		</check>
+		<check name="UpgradeDLUtilCheck">
+			<category name="Upgrade" />
+			<description name="Replace the getGroupIds method of class `DLUtil` by getCurrentAndAncestorSiteGroupIds of class `PortalUtil`." />
+		</check>
+		<check name="UpgradeGetClassNamesMethodCheck">
+			<category name="Upgrade" />
+			<description name="Run code migration of method from 'getClassNames' to 'getSearchClassNames'" />
+		</check>
 		<check name="UpgradeGetImagePreviewURLMethodCheck">
 			<category name="Upgrade" />
 			<description name="Replaces the references of the method 'DLUtil.getImagePreviewURL' with the method 'getImagePreviewURL' of 'DLURLHelper' class" />
@@ -1622,11 +1638,38 @@
 		<check name="UpgradeJavaCheck">
 			<category name="Upgrade" />
 			<description name="Performs upgrade checks for `java` files" />
-			<weight>2</weight>
+			<weight>3</weight>
+		</check>
+		<check name="UpgradeJavaCommerceCountryCheck">
+			<category name="Upgrade" />
+			<description name="Replaces the old methods of class `CommerceCountry` with the new equivalents in the `Country` class." />
+			<weight>1</weight>
+		</check>
+		<check name="UpgradeJavaCommerceCountryServiceCheck">
+			<category name="Upgrade" />
+			<description name="Replaces the old methods of class `CommerceCountryService` with the new equivalents in the `CountryService` class." />
+			<weight>1</weight>
+		</check>
+		<check name="UpgradeJavaCommerceRegionCheck">
+			<category name="Upgrade" />
+			<description name="Replaces the old methods of class `CommerceRegion` with the new equivalents in the `Region` class." />
+			<weight>1</weight>
+		</check>
+		<check name="UpgradeJavaCookieKeysCheck">
+			<category name="Upgrade" />
+			<description name="CookieKeys class was replaced by CookiesManagerUtil and CookieConstants" />
+		</check>
+		<check name="UpgradeJavaCookieUtilCheck">
+			<category name="Upgrade" />
+			<description name="Replace CookieUtilCheck.get by CookiesManagerUtil.getCookieValue and reorder parameters" />
 		</check>
 		<check name="UpgradeJavaExtractTextMethodCheck">
 			<category name="Upgrade" />
 			<description name="Replaces the references of the method `HtmlUtil.extractText(` with the method `extractText(` of `HtmlParser` class" />
+		</check>
+		<check name="UpgradeJavaFacetedSearcherCheck">
+			<category name="Upgrade" />
+			<description name="Replaces the references of the `Indexer indexer = FacetedSearcher.getInstance();` declaration and `indexer.search` method call." />
 		</check>
 		<check name="UpgradeJavaFDSActionProviderCheck">
 			<category name="Upgrade" />
@@ -1642,6 +1685,20 @@
 			<category name="Upgrade" />
 			<description name="Run code migration of method from 'getFile' to 'getFileAsStream', and include a method 'FileUtil.createTempFile'" />
 		</check>
+		<check name="UpgradeJavaGetLayoutDisplayPageObjectProviderCheck">
+			<category name="Upgrade" />
+			<description name="Replace parameter type long by ItemInfoReference in the getLayoutDisplayPageObjectProvider method" />
+			<weight>1</weight>
+		</check>
+		<check name="UpgradeJavaGetLayoutDisplayPageProviderCheck">
+			<category name="Upgrade" />
+			<description name="Replace getLayoutDisplayPageProvider by getLayoutDisplayPageProviderByClassName" />
+			<weight>2</weight>
+		</check>
+		<check name="UpgradeJavaIndexerCheck">
+			<category name="Upgrade" />
+			<description name="Replace Indexer by Indexer&lt;?&gt;" />
+		</check>
 		<check name="UpgradeJavaMultiVMPoolUtilCheck">
 			<category name="Upgrade" />
 			<description name="Replaces the references of the MultiVMPoolUtil class and also its methods usages." />
@@ -1650,9 +1707,17 @@
 			<category name="Upgrade" />
 			<description name="Replaces the Optional return type of the methods `getParameterValues` and `getPortletPreferences` of `PortletSharedSearchSettings` class" />
 		</check>
+		<check name="UpgradeJavaSearchVocabulariesMethodCheck">
+			<category name="Upgrade" />
+			<description name="Fill in the new parameters of the method `searchVocabularies` of 'AssetVocabularyService' and 'AssetVocabularyLocalService'" />
+		</check>
 		<check name="UpgradeJavaServiceReferenceAnnotationCheck">
 			<category name="Upgrade" />
 			<description name="Run code migration to replace '@ServiceReference' by '@Reference'" />
+		</check>
+		<check name="UpgradeJavaUpdateCommerceAddressCheck">
+			<category name="Upgrade" />
+			<description name="Replace parameter in updateCommerceAddress method by other parameters list" />
 		</check>
 		<check name="UpgradeRejectedExecutionHandlerCheck">
 			<category name="Upgrade" />

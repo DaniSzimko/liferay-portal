@@ -1,6 +1,7 @@
 @component-name = "portal-wcm"
 definition {
 
+	property ci.retries.disabled = "true";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testcase.url = "http://localhost:8080";
@@ -1394,8 +1395,6 @@ definition {
 	@description = "This is a use case for LPS-133629. The user can select folder by search when create web content based on custom structure via Asset Publisher."
 	@priority = 4
 	test SelectFolderBySearchWhenCreateWebContentBasedOnCustomStructureViaAssetPublisher {
-		property timeout.explicit.wait = "10";
-
 		task ("Add a web content folder") {
 			JSONWebcontent.addFolder(
 				folderDescription = "WC Folder Description",
@@ -1473,7 +1472,6 @@ definition {
 	@priority = 5
 	test SelectFolderWhenCreateWebContentViaAssetPublisher {
 		property portal.acceptance = "true";
-		property timeout.explicit.wait = "20";
 
 		task ("Add a web content folder") {
 			JSONWebcontent.addFolder(

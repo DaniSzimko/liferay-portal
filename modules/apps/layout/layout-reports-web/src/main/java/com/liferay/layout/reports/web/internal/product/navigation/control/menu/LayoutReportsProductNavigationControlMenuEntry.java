@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2023 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -17,6 +17,7 @@ import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -155,37 +156,32 @@ public class LayoutReportsProductNavigationControlMenuEntry
 	public boolean isShow(HttpServletRequest httpServletRequest)
 		throws PortalException {
 
-		long scopeGroupId = _portal.getScopeGroupId(httpServletRequest);
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
-		if ((scopeGroupId == 0) ||
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-187284") &&
 			!_layoutReportsGooglePageSpeedConfigurationProvider.isEnabled(
-				_groupLocalService.getGroup(scopeGroupId))) {
+				themeDisplay.getScopeGroup())) {
 
 			return false;
 		}
 
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
+		Layout layout = themeDisplay.getLayout();
+
+		if (FeatureFlagManagerUtil.isEnabled("LPS-187284") &&
+			!_layoutReportsGooglePageSpeedConfigurationProvider.isEnabled(
+				themeDisplay.getScopeGroup()) &&
+			!layout.isTypeContent() && !layout.isTypeAssetDisplay()) {
+
+			return false;
+		}
 
 		if (!_isShow(themeDisplay) || !_isShowPanel(httpServletRequest)) {
 			return false;
 		}
 
 		return super.isShow(httpServletRequest);
-	}
-
-	private String _getLayoutReportsDataURL(
-		HttpServletRequest httpServletRequest) {
-
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
-		return HttpComponentsUtil.addParameters(
-			themeDisplay.getPortalURL() + themeDisplay.getPathMain() +
-				"/layout_reports/get_layout_reports_data",
-			"p_l_id", themeDisplay.getPlid());
 	}
 
 	private boolean _hasEditPermission(
@@ -301,7 +297,7 @@ public class LayoutReportsProductNavigationControlMenuEntry
 			sb.append("class=\"autofit-col autofit-col-expand\">");
 			sb.append("<h1 class=\"sr-only\">");
 			sb.append(_language.get(resourceBundle, "page-audit"));
-			sb.append("</h1><span>");
+			sb.append("</h1><span class=\"font-weight-bold\">");
 			sb.append(_language.get(resourceBundle, "page-audit"));
 			sb.append("</span></div>");
 			sb.append("<div class=\"autofit-col\">");
@@ -335,8 +331,34 @@ public class LayoutReportsProductNavigationControlMenuEntry
 						ProductNavigationControlMenuEntryConstants.
 							SESSION_CLICKS_KEY)
 				).put(
-					"layoutReportsDataURL",
-					_getLayoutReportsDataURL(httpServletRequest)
+					() -> {
+						if (!FeatureFlagManagerUtil.isEnabled("LPS-187284")) {
+							return "layoutReportsDataURL";
+						}
+
+						return "layoutReportsTabsURL";
+					},
+					() -> {
+						ThemeDisplay themeDisplay =
+							(ThemeDisplay)httpServletRequest.getAttribute(
+								WebKeys.THEME_DISPLAY);
+
+						if (!FeatureFlagManagerUtil.isEnabled("LPS-187284")) {
+							return HttpComponentsUtil.addParameters(
+								StringBundler.concat(
+									themeDisplay.getPortalURL(),
+									themeDisplay.getPathMain(),
+									"/layout_reports",
+									"/get_layout_reports_data"),
+								"p_l_id", themeDisplay.getPlid());
+						}
+
+						return HttpComponentsUtil.addParameters(
+							themeDisplay.getPortalURL() +
+								themeDisplay.getPathMain() +
+									"/layout_reports/get_layout_reports_tabs",
+							"p_l_id", themeDisplay.getPlid());
+					}
 				).build(),
 				httpServletRequest, jspWriter);
 

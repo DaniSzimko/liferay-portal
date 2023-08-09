@@ -6,9 +6,6 @@
 package com.liferay.object.web.internal.object.definitions.display.context;
 
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
-import com.liferay.frontend.data.set.model.FDSSortItemBuilder;
-import com.liferay.frontend.data.set.model.FDSSortItemList;
-import com.liferay.frontend.data.set.model.FDSSortItemListBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.object.constants.ObjectActionKeys;
 import com.liferay.object.model.ObjectDefinition;
@@ -88,6 +85,14 @@ public class ViewObjectDefinitionsDisplayContext {
 		).buildString();
 	}
 
+	public String getEditObjectFolderURL() throws Exception {
+		return PortletURLBuilder.create(
+			getPortletURL()
+		).setMVCRenderCommandName(
+			"/object_definitions/edit_object_folder"
+		).buildString();
+	}
+
 	public List<FDSActionDropdownItem> getFDSActionDropdownItems()
 		throws Exception {
 
@@ -117,16 +122,6 @@ public class ViewObjectDefinitionsDisplayContext {
 				LanguageUtil.get(
 					_objectRequestHelper.getRequest(), "permissions"),
 				"get", "permissions", "modal-permissions"));
-	}
-
-	public FDSSortItemList getFDSSortItemList() {
-		return FDSSortItemListBuilder.add(
-			FDSSortItemBuilder.setDirection(
-				"asc"
-			).setKey(
-				"label"
-			).build()
-		).build();
 	}
 
 	public PortletURL getPortletURL() throws PortletException {

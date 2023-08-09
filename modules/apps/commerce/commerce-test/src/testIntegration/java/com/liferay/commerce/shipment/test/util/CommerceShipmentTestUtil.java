@@ -28,6 +28,8 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 
+import java.math.BigDecimal;
+
 /**
  * @author Luca Pellizzon
  */
@@ -72,14 +74,14 @@ public class CommerceShipmentTestUtil {
 
 		CommerceOrderItem commerceOrderItem =
 			CommerceTestUtil.addCommerceOrderItem(
-				commerceOrderId, cpInstance.getCPInstanceId(), createQuantity,
-				commerceContext);
+				commerceOrderId, cpInstance.getCPInstanceId(),
+				BigDecimal.valueOf(createQuantity), commerceContext);
 
 		return CommerceShipmentItemLocalServiceUtil.addCommerceShipmentItem(
 			null, commerceShipmentId,
 			commerceOrderItem.getCommerceOrderItemId(),
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
-			addQuantity, true, serviceContext);
+			addQuantity, null, true, serviceContext);
 	}
 
 	public static CommerceShipment createEmptyOrderShipment(
@@ -107,10 +109,12 @@ public class CommerceShipmentTestUtil {
 		for (CommerceOrderItem commerceOrderItem :
 				commerceOrder.getCommerceOrderItems()) {
 
+			BigDecimal quantity = commerceOrderItem.getQuantity();
+
 			CommerceShipmentItemLocalServiceUtil.addCommerceShipmentItem(
 				null, commerceShipment.getCommerceShipmentId(),
 				commerceOrderItem.getCommerceOrderItemId(), warehouseId,
-				commerceOrderItem.getQuantity(), true, serviceContext);
+				quantity.intValue(), null, true, serviceContext);
 		}
 	}
 
@@ -131,10 +135,12 @@ public class CommerceShipmentTestUtil {
 		for (CommerceOrderItem commerceOrderItem :
 				commerceOrder.getCommerceOrderItems()) {
 
+			BigDecimal quantity = commerceOrderItem.getQuantity();
+
 			CommerceShipmentItemLocalServiceUtil.addCommerceShipmentItem(
 				null, commerceShipment.getCommerceShipmentId(),
 				commerceOrderItem.getCommerceOrderItemId(), commerceWarehouseId,
-				commerceOrderItem.getQuantity(), true, serviceContext);
+				quantity.intValue(), null, true, serviceContext);
 		}
 
 		return commerceShipment;

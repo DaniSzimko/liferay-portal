@@ -34,6 +34,7 @@ import com.liferay.item.selector.criteria.info.item.criterion.InfoItemItemSelect
 import com.liferay.item.selector.criteria.url.criterion.URLItemSelectorCriterion;
 import com.liferay.item.selector.criteria.video.criterion.VideoItemSelectorCriterion;
 import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
+import com.liferay.layout.admin.constants.LayoutScreenNavigationEntryConstants;
 import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
 import com.liferay.layout.content.page.editor.sidebar.panel.ContentPageEditorSidebarPanel;
 import com.liferay.layout.content.page.editor.web.internal.configuration.PageEditorConfiguration;
@@ -888,6 +889,10 @@ public class ContentPageEditorDisplayContext {
 
 					return null;
 				}
+			).setBackURL(
+				ParamUtil.getString(
+					portal.getOriginalServletRequest(httpServletRequest),
+					"p_l_back_url", themeDisplay.getURLCurrent())
 			).buildString(),
 			"p_l_mode", Constants.EDIT);
 	}
@@ -1225,7 +1230,7 @@ public class ContentPageEditorDisplayContext {
 			_fragmentEntryLinkLocalService.
 				getFragmentEntryLinksBySegmentsExperienceId(
 					getGroupId(), getSegmentsExperienceId(),
-					themeDisplay.getPlid());
+					themeDisplay.getPlid(), false);
 
 		LayoutStructure layoutStructure = _getLayoutStructure();
 
@@ -1255,15 +1260,26 @@ public class ContentPageEditorDisplayContext {
 		Map<Long, LayoutStructureItem> fragmentLayoutStructureItems =
 			layoutStructure.getFragmentLayoutStructureItems();
 
-		for (long fragmentEntryLinkId : fragmentLayoutStructureItems.keySet()) {
+		for (Map.Entry<Long, LayoutStructureItem> fragmentLayoutStructureItem :
+				fragmentLayoutStructureItems.entrySet()) {
+
 			if (fragmentEntryLinksMap.containsKey(
-					String.valueOf(fragmentEntryLinkId))) {
+					String.valueOf(fragmentLayoutStructureItem.getKey()))) {
+
+				continue;
+			}
+
+			LayoutStructureItem layoutStructureItem =
+				fragmentLayoutStructureItem.getValue();
+
+			if (layoutStructure.isItemMarkedForDeletion(
+					layoutStructureItem.getItemId())) {
 
 				continue;
 			}
 
 			fragmentEntryLinksMap.put(
-				String.valueOf(fragmentEntryLinkId),
+				String.valueOf(fragmentLayoutStructureItem.getKey()),
 				JSONUtil.put(
 					"configuration", _jsonFactory.createJSONObject()
 				).put(
@@ -1276,7 +1292,8 @@ public class ContentPageEditorDisplayContext {
 				).put(
 					"error", Boolean.TRUE
 				).put(
-					"fragmentEntryLinkId", String.valueOf(fragmentEntryLinkId)
+					"fragmentEntryLinkId",
+					String.valueOf(fragmentLayoutStructureItem.getKey())
 				));
 		}
 
@@ -1501,7 +1518,8 @@ public class ContentPageEditorDisplayContext {
 		).setParameter(
 			"privateLayout", layout.isPrivateLayout()
 		).setParameter(
-			"screenNavigationEntryKey", "design"
+			"screenNavigationEntryKey",
+			LayoutScreenNavigationEntryConstants.ENTRY_KEY_DESIGN
 		).setParameter(
 			"selPlid",
 			() -> {

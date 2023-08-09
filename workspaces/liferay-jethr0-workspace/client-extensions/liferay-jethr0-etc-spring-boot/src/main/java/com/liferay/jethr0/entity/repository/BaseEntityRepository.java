@@ -41,9 +41,9 @@ public abstract class BaseEntityRepository<T extends Entity>
 	}
 
 	@Override
-	public void addAll(Set<T> entities) {
+	public Set<T> addAll(Set<T> entities) {
 		if (entities == null) {
-			return;
+			return entities;
 		}
 
 		entities.removeAll(Collections.singleton(null));
@@ -57,6 +57,8 @@ public abstract class BaseEntityRepository<T extends Entity>
 
 			_entitiesMap.put(entity.getId(), entity);
 		}
+
+		return entities;
 	}
 
 	@Override
@@ -74,6 +76,9 @@ public abstract class BaseEntityRepository<T extends Entity>
 		EntityDALO<T> entityDALO = getEntityDALO();
 
 		addAll(entityDALO.getAll());
+	}
+
+	public void initializeRelationships() {
 	}
 
 	@Override

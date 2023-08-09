@@ -5,10 +5,11 @@
 
 package com.liferay.jethr0.project.queue;
 
-import com.liferay.jethr0.build.Build;
-import com.liferay.jethr0.build.repository.BuildRepository;
-import com.liferay.jethr0.build.repository.BuildRunRepository;
-import com.liferay.jethr0.build.run.BuildRun;
+import com.liferay.jethr0.bui1d.Build;
+import com.liferay.jethr0.bui1d.repository.BuildParameterRepository;
+import com.liferay.jethr0.bui1d.repository.BuildRepository;
+import com.liferay.jethr0.bui1d.repository.BuildRunRepository;
+import com.liferay.jethr0.bui1d.run.BuildRun;
 import com.liferay.jethr0.gitbranch.repository.GitBranchRepository;
 import com.liferay.jethr0.project.Project;
 import com.liferay.jethr0.project.comparator.BaseProjectComparator;
@@ -86,34 +87,41 @@ public class ProjectQueue {
 	}
 
 	public void initialize() {
-		for (ProjectPrioritizer projectPrioritizer :
-				_projectPrioritizerRepository.getAll()) {
+		_projectComparatorRepository.initialize();
+		_projectPrioritizerRepository.initialize();
 
-			_projectComparatorRepository.getAll(projectPrioritizer);
-		}
+		_projectComparatorRepository.setProjectPrioritizerRepository(
+			_projectPrioritizerRepository);
+
+		_projectPrioritizerRepository.setProjectComparatorRepository(
+			_projectComparatorRepository);
+
+		_projectComparatorRepository.initializeRelationships();
+		_projectPrioritizerRepository.initializeRelationships();
+
+		_buildParameterRepository.initialize();
+		_buildRepository.initialize();
+		_buildRunRepository.initialize();
+		_projectRepository.initialize();
+
+		_buildRepository.setBuildParameterRepository(_buildParameterRepository);
+		_buildRepository.setBuildRunRepository(_buildRunRepository);
+		_buildRepository.setProjectRepository(_projectRepository);
+
+		_buildRunRepository.setBuildRepository(_buildRepository);
+
+		_buildParameterRepository.setBuildRepository(_buildRepository);
+
+		_projectRepository.setBuildRepository(_buildRepository);
+
+		_buildParameterRepository.initializeRelationships();
+		_buildRepository.initializeRelationships();
+		_buildRunRepository.initializeRelationships();
+		_projectRepository.initializeRelationships();
 
 		setProjectPrioritizer(_getDefaultProjectPrioritizer());
 
-		Set<Project> projects = new HashSet<>();
-
-		for (Project project : _projectRepository.getAll()) {
-			_buildRepository.getAll(project);
-			_gitBranchRepository.getAll(project);
-			_taskRepository.getAll(project);
-			_testSuiteRepository.getAll(project);
-
-			Project.State state = project.getState();
-
-			if ((state != Project.State.QUEUED) &&
-				(state != Project.State.RUNNING)) {
-
-				continue;
-			}
-
-			projects.add(project);
-		}
-
-		addProjects(projects);
+		addProjects(_projectRepository.getAll());
 
 		update();
 	}
@@ -252,6 +260,9 @@ public class ProjectQueue {
 	}
 
 	private static final Log _log = LogFactory.getLog(ProjectQueue.class);
+
+	@Autowired
+	private BuildParameterRepository _buildParameterRepository;
 
 	@Autowired
 	private BuildRepository _buildRepository;

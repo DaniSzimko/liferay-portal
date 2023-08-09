@@ -103,12 +103,12 @@ import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
 import com.liferay.portal.kernel.workflow.WorkflowInstance;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
-import com.liferay.portal.kernel.workflow.comparator.WorkflowComparatorFactoryUtil;
 import com.liferay.portal.kernel.workflow.search.WorkflowModelSearchResult;
 import com.liferay.portal.search.test.util.SearchTestRule;
 import com.liferay.portal.security.permission.SimplePermissionChecker;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.util.PortalInstances;
+import com.liferay.portal.workflow.comparator.WorkflowComparatorFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -155,6 +155,10 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 			HashMapDictionaryBuilder.<String, Object>put(
 				"company.administrator.can.publish", true
 			).build());
+
+		_originalName = PrincipalThreadLocal.getName();
+
+		PrincipalThreadLocal.setName(TestPropsValues.getUserId());
 	}
 
 	@AfterClass
@@ -162,6 +166,8 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 		_companyLocalService.deleteCompany(_company);
 
 		ConfigurationTestUtil.deleteConfiguration(_configuration);
+
+		PrincipalThreadLocal.setName(_originalName);
 	}
 
 	@Before
@@ -1201,8 +1207,7 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 				null, null, User.class.getName(),
 				new Long[] {_adminUser.getUserId()}, null, null, true, false,
 				false, null, null, false, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
-				WorkflowComparatorFactoryUtil.getTaskModifiedDateComparator(
-					true));
+				_workflowComparatorFactory.getTaskModifiedDateComparator(true));
 
 		_assertEquals(
 			workflowTasks, workflowModelSearchResult.getWorkflowModels());
@@ -1212,7 +1217,7 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 			null, User.class.getName(), new Long[] {_adminUser.getUserId()},
 			null, null, true, false, false, null, null, false,
 			QueryUtil.ALL_POS, QueryUtil.ALL_POS,
-			WorkflowComparatorFactoryUtil.getTaskModifiedDateComparator(false));
+			_workflowComparatorFactory.getTaskModifiedDateComparator(false));
 
 		Collections.reverse(workflowTasks);
 
@@ -1241,7 +1246,7 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 					StringPool.BLANK, new String[] {StringPool.BLANK}, null,
 					null, null, null, null, null, null, true, true, null, null,
 					false, 0, 1,
-					WorkflowComparatorFactoryUtil.getTaskModifiedDateComparator(
+					_workflowComparatorFactory.getTaskModifiedDateComparator(
 						false));
 
 			List<WorkflowTask> workflowTasks =
@@ -1257,7 +1262,7 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 				StringPool.BLANK, new String[] {StringPool.BLANK}, null, null,
 				null, null, null, null, null, true, true, null, null, false, 0,
 				1,
-				WorkflowComparatorFactoryUtil.getTaskModifiedDateComparator(
+				_workflowComparatorFactory.getTaskModifiedDateComparator(
 					false));
 
 		List<WorkflowTask> workflowTasks =
@@ -1820,7 +1825,7 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 			_adminUser.getCompanyId(), _adminUser.getUserId(), null, null,
 			assetTypes, assetPrimaryKeys, null, null, null, null, false, true,
 			null, null, false, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
-			WorkflowComparatorFactoryUtil.getTaskModifiedDateComparator(true));
+			_workflowComparatorFactory.getTaskModifiedDateComparator(true));
 	}
 
 	private int _searchCount(String keywords) throws Exception {
@@ -1977,6 +1982,8 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 	@Inject
 	private static ConfigurationAdmin _configurationAdmin;
 
+	private static String _originalName;
+
 	private User _adminUser;
 
 	@Inject
@@ -2041,6 +2048,9 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 	@Inject
 	private UserNotificationEventLocalService
 		_userNotificationEventLocalService;
+
+	@Inject
+	private WorkflowComparatorFactory _workflowComparatorFactory;
 
 	@Inject
 	private WorkflowDefinitionManager _workflowDefinitionManager;

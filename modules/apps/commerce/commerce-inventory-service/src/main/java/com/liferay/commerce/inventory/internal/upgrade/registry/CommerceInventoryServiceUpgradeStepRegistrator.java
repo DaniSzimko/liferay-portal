@@ -161,7 +161,22 @@ public class CommerceInventoryServiceUpgradeStepRegistrator
 				"unitOfMeasureKey VARCHAR(75) null"));
 
 		registry.register(
-			"2.7.0", "2.8.0", new CommerceInventoryAuditUpgradeProcess());
+			"2.7.0", "2.8.0",
+			UpgradeProcessFactory.alterColumnType(
+				"CIAudit", "quantity", "BIGDECIMAL null"));
+
+		registry.register(
+			"2.8.0", "2.9.0",
+			UpgradeProcessFactory.alterColumnType(
+				"CIWarehouseItem", "quantity", "BIGDECIMAL null"),
+			UpgradeProcessFactory.alterColumnType(
+				"CIWarehouseItem", "reservedQuantity", "BIGDECIMAL null"));
+
+		registry.register(
+			"2.9.0", "2.10.0",
+			UpgradeProcessFactory.alterColumnType(
+				CommerceInventoryReplenishmentItemModelImpl.TABLE_NAME,
+				"quantity", "BIGDECIMAL null"));
 
 		if (_log.isInfoEnabled()) {
 			_log.info("Commerce inventory upgrade step registrator finished");

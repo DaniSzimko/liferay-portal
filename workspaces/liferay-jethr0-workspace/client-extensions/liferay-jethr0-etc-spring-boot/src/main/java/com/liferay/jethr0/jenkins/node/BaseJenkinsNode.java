@@ -5,12 +5,16 @@
 
 package com.liferay.jethr0.jenkins.node;
 
-import com.liferay.jethr0.build.Build;
+import com.liferay.jethr0.bui1d.Build;
 import com.liferay.jethr0.entity.BaseEntity;
+import com.liferay.jethr0.jenkins.cohort.JenkinsCohort;
 import com.liferay.jethr0.jenkins.server.JenkinsServer;
+import com.liferay.jethr0.project.Project;
 import com.liferay.jethr0.util.StringUtil;
 
 import java.net.URL;
+
+import java.util.Set;
 
 import org.apache.tomcat.util.codec.binary.Base64;
 
@@ -30,8 +34,24 @@ public class BaseJenkinsNode extends BaseEntity implements JenkinsNode {
 	}
 
 	@Override
+	public JenkinsCohort getJenkinsCohort() {
+		JenkinsServer jenkinsServer = getJenkinsServer();
+
+		if (jenkinsServer == null) {
+			return null;
+		}
+
+		return jenkinsServer.getJenkinsCohort();
+	}
+
+	@Override
 	public JenkinsServer getJenkinsServer() {
 		return _jenkinsServer;
+	}
+
+	@Override
+	public long getJenkinsServerId() {
+		return _jenkinsServerId;
 	}
 
 	@Override
@@ -46,15 +66,12 @@ public class BaseJenkinsNode extends BaseEntity implements JenkinsNode {
 			"nodeCount", getNodeCount()
 		).put(
 			"nodeRAM", getNodeRAM()
+		).put(
+			"primaryLabel", getPrimaryLabel()
+		).put(
+			"r_jenkinsServerToJenkinsNodes_c_jenkinsServerId",
+			getJenkinsServerId()
 		);
-
-		JenkinsServer jenkinsServer = getJenkinsServer();
-
-		if (jenkinsServer != null) {
-			jsonObject.put(
-				"r_jenkinsServerToJenkinsNodes_c_jenkinsServerId",
-				jenkinsServer.getId());
-		}
 
 		Type type = getType();
 
@@ -83,6 +100,11 @@ public class BaseJenkinsNode extends BaseEntity implements JenkinsNode {
 	}
 
 	@Override
+	public String getPrimaryLabel() {
+		return _primaryLabel;
+	}
+
+	@Override
 	public Type getType() {
 		return _type;
 	}
@@ -103,8 +125,9 @@ public class BaseJenkinsNode extends BaseEntity implements JenkinsNode {
 
 	@Override
 	public boolean isCompatible(Build build) {
-		if (!_hasCompatibleBattery(build) || !_hasCompatibleNodeCount(build) ||
-			!_hasCompatibleNodeRAM(build) || !_hasCompatibleNodeType(build)) {
+		if (!_hasCompatibleBattery(build) || !_hasCompatibleCohort(build) ||
+			!_hasCompatibleNodeCount(build) || !_hasCompatibleNodeRAM(build) ||
+			!_hasCompatibleNodeType(build)) {
 
 			return false;
 		}
@@ -130,6 +153,13 @@ public class BaseJenkinsNode extends BaseEntity implements JenkinsNode {
 	@Override
 	public void setJenkinsServer(JenkinsServer jenkinsServer) {
 		_jenkinsServer = jenkinsServer;
+
+		if (jenkinsServer != null) {
+			_jenkinsServerId = jenkinsServer.getId();
+		}
+		else {
+			_jenkinsServerId = 0;
+		}
 	}
 
 	@Override
@@ -145,6 +175,11 @@ public class BaseJenkinsNode extends BaseEntity implements JenkinsNode {
 	@Override
 	public void setNodeRAM(int nodeRAM) {
 		_nodeRAM = nodeRAM;
+	}
+
+	@Override
+	public void setPrimaryLabel(String primaryLabel) {
+		_primaryLabel = primaryLabel;
 	}
 
 	@Override
@@ -166,7 +201,10 @@ public class BaseJenkinsNode extends BaseEntity implements JenkinsNode {
 	protected BaseJenkinsNode(JSONObject jsonObject) {
 		super(jsonObject);
 
+		_jenkinsServerId = jsonObject.optLong(
+			"r_jenkinsServerToJenkinsNodes_c_jenkinsServerId");
 		_goodBattery = jsonObject.getBoolean("goodBattery");
+		_primaryLabel = jsonObject.getString("primaryLabel");
 		_name = jsonObject.getString("name");
 		_nodeCount = jsonObject.getInt("nodeCount");
 		_nodeRAM = jsonObject.getInt("nodeRAM");
@@ -205,6 +243,20 @@ public class BaseJenkinsNode extends BaseEntity implements JenkinsNode {
 		return false;
 	}
 
+	private boolean _hasCompatibleCohort(Build build) {
+		Project project = build.getProject();
+
+		Set<JenkinsCohort> jenkinsCohorts = project.getJenkinsCohorts();
+
+		if (jenkinsCohorts.isEmpty() ||
+			jenkinsCohorts.contains(getJenkinsCohort())) {
+
+			return true;
+		}
+
+		return false;
+	}
+
 	private boolean _hasCompatibleNodeCount(Build build) {
 		if (getNodeCount() <= build.getMaxNodeCount()) {
 			return true;
@@ -234,10 +286,12 @@ public class BaseJenkinsNode extends BaseEntity implements JenkinsNode {
 	private boolean _goodBattery;
 	private boolean _idle;
 	private JenkinsServer _jenkinsServer;
+	private long _jenkinsServerId;
 	private String _name;
 	private int _nodeCount;
 	private int _nodeRAM;
 	private boolean _offline;
+	private String _primaryLabel;
 	private final Type _type;
 	private URL _url;
 

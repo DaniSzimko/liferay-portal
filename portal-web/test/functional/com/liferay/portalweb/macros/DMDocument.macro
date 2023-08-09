@@ -1413,7 +1413,7 @@ definition {
 			key_rowEntry = ${mgDocumentTitle},
 			locator1 = "Icon#ROW_VERTICAL_ELLIPSIS");
 
-		Click.waitForMenuToggleJSClick(
+		Click.waitForPersonalMenuJSClick(
 			key_rowEntry = ${mgDocumentTitle},
 			locator1 = "Icon#ROW_VERTICAL_ELLIPSIS");
 
@@ -3070,7 +3070,7 @@ definition {
 
 	macro viewActionDetailsInKebabMenu {
 		for (var menuItem : list ${menuItem}) {
-			MenuItem.verifyPresent(menuItem = ${menuItem});
+			MenuItem.verifyVisible(menuItem = ${menuItem});
 		}
 	}
 
@@ -3660,6 +3660,32 @@ definition {
 		}
 	}
 
+	macro viewDocumentVersionInfoFromVersionsPage {
+		AssertVisible(
+			index = ${orderIndex},
+			key_tableEntry = ${dmDocumentTitle},
+			locator1 = "LexiconTable#TABLE_ENTRY_TITLE_INDEXED");
+
+		var list1 = ListUtil.newListFromString("id,title,version,status,modified-date,author");
+		var list2 = ListUtil.newListFromString(${dmDocumentVersionInfo});
+		var size = ListUtil.size(${list1});
+		var i = 0;
+
+		while (${i} != ${size}) {
+			var tableTitle = ListUtil.get(${list1}, ${i});
+			var dmDocumentVersionInfo = ListUtil.get(${list2}, ${i});
+
+			AssertVisible(
+				key_columnName = ${tableTitle},
+				key_tableEntry = ${dmDocumentVersionInfo},
+				locator1 = "LexiconTable#TABLE_ENTRY_INFO");
+
+			var i = ${i} + 1;
+
+			var i = StringUtil.valueOf(${i});
+		}
+	}
+
 	macro viewDocumentVersionNumberCmdPG {
 		DMDocument.expandInfo();
 
@@ -3779,6 +3805,10 @@ definition {
 			}
 		}
 		else {
+			while (IsElementPresent(locator1 = "Treeview#NODE_COLLAPSED")) {
+				Click(locator1 = "Treeview#NODE_COLLAPSED");
+			}
+
 			for (var category : list ${category}) {
 				AssertTextEquals(
 					key_nodeName = ${category},

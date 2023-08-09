@@ -183,10 +183,12 @@ definition {
 		}
 
 		task ("Then system settings can now be accessed from the instance") {
-			User.firstLoginPG(
+			User.logoutPG(specificURL = "http://www.able.com:8080");
+
+			User.firstLoginUI(
 				password = "test",
-				userEmailAddress = "test@www.able.com",
-				virtualHostsURL = "http://www.able.com:8080");
+				specificURL = "http://www.able.com:8080",
+				userEmailAddress = "test@www.able.com");
 
 			ApplicationsMenu.gotoPortlet(
 				category = "Configuration",
@@ -195,7 +197,7 @@ definition {
 		}
 
 		task ("And the original default instance can be removed") {
-			PortalInstances.openVirtualInstancesAdmin();
+			PortalInstances.openVirtualInstancesAdmin(baseURL = "http://www.able.com:8080");
 
 			PortalInstances.deleteCP(virtualHost = "liferay.com");
 		}

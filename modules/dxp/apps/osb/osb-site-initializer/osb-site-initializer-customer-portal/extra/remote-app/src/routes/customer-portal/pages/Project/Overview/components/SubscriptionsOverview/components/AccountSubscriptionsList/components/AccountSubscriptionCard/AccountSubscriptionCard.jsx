@@ -60,13 +60,19 @@ const AccountSubscriptionCard = ({
 	const DisplayOnCard = {
 		Blank: null,
 		Purchased: (
-			<p className="align-items-center d-flex justify-content-center m-0">
-				{accountSubscription?.quantity}
-			</p>
+			<>
+				{accountSubscription?.quantity && (
+					<span className="align-items-center d-flex justify-content-center m-0">
+						{accountSubscription?.quantity}
+					</span>
+				)}
+			</>
 		),
 		PurchasedAndProvisioned: (
 			<p className="d-flex justify-content-center m-0">
-				{`${currentConsumption}/${accountSubscription?.quantity}`}
+				{currentConsumption !== undefined
+					? `${currentConsumption}/${accountSubscription?.quantity}`
+					: `0/${accountSubscription?.quantity}`}
 			</p>
 		),
 	};

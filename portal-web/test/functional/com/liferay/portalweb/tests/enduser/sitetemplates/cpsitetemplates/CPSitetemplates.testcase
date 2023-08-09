@@ -1290,7 +1290,9 @@ definition {
 
 			PageEditor.publish();
 
-			Navigator.openSiteURL(siteName = "Site Name A");
+			Navigator.gotoSitePage(
+				pageName = "Home",
+				siteName = "Site Name A");
 
 			Refresh();
 		}
@@ -1933,19 +1935,11 @@ definition {
 				pageName = "Page1",
 				siteTemplateName = "Site Template Name");
 
-			SiteTemplatesNavigator.openSiteTemplatesAdmin();
-
-			LexiconEntry.gotoEntryMenuItem(
-				menuItem = "Manage",
-				rowEntry = "Site Template Name");
-
-			ProductMenu.gotoPortlet(
-				category = "Site Builder",
-				portlet = "Pages");
-
-			PagesAdmin.addChildPageWithConfirm(
+			SiteTemplates.addChildPageViaSiteTemplateCP(
 				childPageName = "Page2",
-				parentPageName = "Page1");
+				conflictPage = "true",
+				parentPageName = "Page1",
+				siteTemplateName = "Site Template Name");
 		}
 
 		task ("Then A warning message is present about friendly URL collision of child page") {

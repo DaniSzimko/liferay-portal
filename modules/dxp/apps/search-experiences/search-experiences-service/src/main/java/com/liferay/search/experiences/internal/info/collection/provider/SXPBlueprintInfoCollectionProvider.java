@@ -154,8 +154,8 @@ public class SXPBlueprintInfoCollectionProvider
 				}
 
 				searchContext.setAttribute(
-					"search.experiences.blueprint.id",
-					_sxpBlueprint.getSXPBlueprintId());
+					"search.experiences.blueprint.external.reference.code",
+					_sxpBlueprint.getExternalReferenceCode());
 				searchContext.setAttribute(
 					"search.experiences.ip.address",
 					serviceContext.getRemoteAddr());

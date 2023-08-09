@@ -1058,9 +1058,15 @@ definition {
 						checkboxName = ${fieldName},
 						locator1 = "Checkbox#ANY_CHECKBOX");
 
-					PortletEntry.save();
+					Button.clickSave();
+
+					SelectFrameTop();
 
 					SelectFrame(locator1 = "ObjectAction#IFRAME_SIDE_PANEL");
+
+					WaitForVisible(
+						key_fieldLabel = ${fieldName},
+						locator1 = "ObjectAdmin#VIEW_OBJECT_FIELD_LABEL");
 				}
 
 				if (${inputMethod} == "true") {
@@ -1144,7 +1150,9 @@ definition {
 
 		if (isSet(click)) {
 			if ((${click} == "save") && (${notRefreshAttribute} == "true")) {
-				PortletEntry.save();
+				Button.clickSave();
+
+				WaitForElementNotPresent(locator1 = "ObjectAdmin#SIDE_PANEL");
 			}
 			else if (${click} == "cancel") {
 				Button.clickCancel();

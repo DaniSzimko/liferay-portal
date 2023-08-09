@@ -5,8 +5,9 @@
 
 package com.liferay.jethr0.jenkins.node;
 
-import com.liferay.jethr0.build.Build;
+import com.liferay.jethr0.bui1d.Build;
 import com.liferay.jethr0.entity.Entity;
+import com.liferay.jethr0.jenkins.cohort.JenkinsCohort;
 import com.liferay.jethr0.jenkins.server.JenkinsServer;
 
 import java.net.URL;
@@ -23,13 +24,19 @@ public interface JenkinsNode extends Entity {
 
 	public boolean getGoodBattery();
 
+	public JenkinsCohort getJenkinsCohort();
+
 	public JenkinsServer getJenkinsServer();
+
+	public long getJenkinsServerId();
 
 	public String getName();
 
 	public int getNodeCount();
 
 	public int getNodeRAM();
+
+	public String getPrimaryLabel();
 
 	public Type getType();
 
@@ -52,6 +59,8 @@ public interface JenkinsNode extends Entity {
 	public void setNodeCount(int nodeCount);
 
 	public void setNodeRAM(int nodeRAM);
+
+	public void setPrimaryLabel(String primaryLabel);
 
 	public void setURL(URL url);
 

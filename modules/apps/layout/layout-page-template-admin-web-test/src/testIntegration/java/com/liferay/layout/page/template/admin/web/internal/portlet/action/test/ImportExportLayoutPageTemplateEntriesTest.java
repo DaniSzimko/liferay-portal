@@ -528,6 +528,18 @@ public class ImportExportLayoutPageTemplateEntriesTest {
 	}
 
 	@Test
+	public void testImportExportLayoutPageTemplateEntryFormContainerWithNoneSuccessMessage()
+		throws Exception {
+
+		File expectedFile = _generateZipFile(
+			"form/success_message_none/expected", null, null);
+		File inputFile = _generateZipFile(
+			"form/success_message_none/input", null, null);
+
+		_validateImportExport(expectedFile, inputFile);
+	}
+
+	@Test
 	public void testImportExportLayoutPageTemplateEntryFormContainerWithURLSuccessMessage()
 		throws Exception {
 
@@ -1310,7 +1322,7 @@ public class ImportExportLayoutPageTemplateEntriesTest {
 	private ObjectEntry _addObjectEntry() throws Exception {
 		ObjectDefinition objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				TestPropsValues.getUserId(), false, false,
+				TestPropsValues.getUserId(), 0, false, false,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				"A" + RandomTestUtil.randomString(), null,
 				"control_panel.sites",

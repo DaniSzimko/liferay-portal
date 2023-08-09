@@ -5,10 +5,13 @@
 
 package com.liferay.jethr0.event.handler;
 
-import com.liferay.jethr0.build.Build;
-import com.liferay.jethr0.build.repository.BuildRepository;
+import com.liferay.jethr0.bui1d.Build;
+import com.liferay.jethr0.bui1d.repository.BuildRepository;
 import com.liferay.jethr0.project.Project;
 import com.liferay.jethr0.project.repository.ProjectRepository;
+import com.liferay.jethr0.util.StringUtil;
+
+import java.net.URL;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -104,6 +107,120 @@ public abstract class BaseObjectEventHandler extends BaseEventHandler {
 		return jsonArray;
 	}
 
+	protected JSONObject validateJenkinsCohortJSONObject(
+			JSONObject jenkinsCohortJSONObject)
+		throws Exception {
+
+		if (jenkinsCohortJSONObject == null) {
+			throw new Exception("Missing Jenkins cohort");
+		}
+
+		if (jenkinsCohortJSONObject.has("id")) {
+			return jenkinsCohortJSONObject;
+		}
+
+		String name = jenkinsCohortJSONObject.optString("name");
+
+		if (StringUtil.isNullOrEmpty(name)) {
+			throw new Exception("Missing name from Jenkins cohort");
+		}
+
+		JSONObject jsonObject = new JSONObject();
+
+		jsonObject.put(
+			"jenkinsServers",
+			validateJenkinsServersJSONArray(
+				jenkinsCohortJSONObject.optJSONArray("jenkinsServers"))
+		).put(
+			"name", name
+		);
+
+		return jsonObject;
+	}
+
+	protected JSONArray validateJenkinsCohortsJSONArray(
+			JSONArray jenkinsCohortsJSONArray)
+		throws Exception {
+
+		JSONArray jsonArray = new JSONArray();
+
+		if ((jenkinsCohortsJSONArray != null) &&
+			!jenkinsCohortsJSONArray.isEmpty()) {
+
+			for (int i = 0; i < jenkinsCohortsJSONArray.length(); i++) {
+				jsonArray.put(
+					validateJenkinsCohortJSONObject(
+						jenkinsCohortsJSONArray.optJSONObject(i)));
+			}
+		}
+
+		return jsonArray;
+	}
+
+	protected JSONObject validateJenkinsServerJSONObject(
+			JSONObject jenkinsServerJSONObject)
+		throws Exception {
+
+		if (jenkinsServerJSONObject == null) {
+			throw new Exception("Missing Jenkins server");
+		}
+
+		String jenkinsUserName = jenkinsServerJSONObject.optString(
+			"jenkinsUserName");
+
+		if (StringUtil.isNullOrEmpty(jenkinsUserName)) {
+			throw new Exception(
+				"Missing Jenkins user name from Jenkins server");
+		}
+
+		String jenkinsUserPassword = jenkinsServerJSONObject.optString(
+			"jenkinsUserPassword");
+
+		if (StringUtil.isNullOrEmpty(jenkinsUserPassword)) {
+			throw new Exception(
+				"Missing Jenkins user password from Jenkins server");
+		}
+
+		URL url = StringUtil.toURL(jenkinsServerJSONObject.optString("url"));
+
+		if (url == null) {
+			throw new Exception("Missing url from Jenkins server");
+		}
+
+		JSONObject jsonObject = new JSONObject();
+
+		jsonObject.put(
+			"jenkinsUserName", jenkinsUserName
+		).put(
+			"jenkinsUserPassword", jenkinsUserPassword
+		).put(
+			"name", jenkinsServerJSONObject.optString("name")
+		).put(
+			"url", String.valueOf(url)
+		);
+
+		return jsonObject;
+	}
+
+	protected JSONArray validateJenkinsServersJSONArray(
+			JSONArray jenkinsServersJSONArray)
+		throws Exception {
+
+		JSONArray jsonArray = new JSONArray();
+
+		if ((jenkinsServersJSONArray != null) &&
+			!jenkinsServersJSONArray.isEmpty()) {
+
+			for (int i = 0; i < jenkinsServersJSONArray.length(); i++) {
+				jsonArray.put(
+					validateJenkinsServerJSONObject(
+						jenkinsServersJSONArray.optJSONObject(i)));
+			}
+		}
+
+		return jsonArray;
+	}
+
 	protected JSONObject validateProjectJSONObject(JSONObject projectJSONObject)
 		throws Exception {
 
@@ -148,6 +265,10 @@ public abstract class BaseObjectEventHandler extends BaseEventHandler {
 		jsonObject.put(
 			"builds",
 			validateBuildsJSONArray(projectJSONObject.optJSONArray("builds"))
+		).put(
+			"jenkinsCohorts",
+			validateJenkinsCohortsJSONArray(
+				projectJSONObject.optJSONArray("jenkinsCohorts"))
 		).put(
 			"name", name
 		).put(

@@ -11,6 +11,7 @@ import com.liferay.info.field.InfoField;
 import com.liferay.info.field.InfoFieldValue;
 import com.liferay.info.field.type.BooleanInfoFieldType;
 import com.liferay.info.field.type.DateInfoFieldType;
+import com.liferay.info.field.type.DateTimeInfoFieldType;
 import com.liferay.info.field.type.FileInfoFieldType;
 import com.liferay.info.field.type.HTMLInfoFieldType;
 import com.liferay.info.field.type.LongTextInfoFieldType;
@@ -24,17 +25,20 @@ import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFormProvider;
 import com.liferay.info.localized.InfoLocalizedValue;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.upload.FileItem;
 import com.liferay.portal.kernel.upload.UploadServletRequest;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TempFileEntryUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -46,6 +50,9 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 
 import java.text.ParseException;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -79,6 +86,8 @@ public class InfoRequestFieldValuesProviderHelper {
 			(ThemeDisplay)uploadServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
+		String[] checkboxNames = StringUtil.split(
+			ParamUtil.getString(uploadServletRequest, "checkboxNames"));
 		String className = PortalUtil.getClassName(
 			ParamUtil.getLong(uploadServletRequest, "classNameId"));
 		String classTypeId = ParamUtil.getString(
@@ -93,6 +102,10 @@ public class InfoRequestFieldValuesProviderHelper {
 
 		for (InfoField<?> infoField :
 				_getInfoFields(className, classTypeId, groupId)) {
+
+			if (!infoField.isEditable()) {
+				continue;
+			}
 
 			FileItem[] multipartParameters = multipartParameterMap.get(
 				infoField.getName());
@@ -124,12 +137,23 @@ public class InfoRequestFieldValuesProviderHelper {
 					_getInfoFieldValue(
 						infoField, themeDisplay.getLocale(),
 						regularParameterMap.get(infoField.getName())));
+
+				continue;
 			}
 
 			List<String> regularParameters = regularParameterMap.get(
 				infoField.getName());
 
 			if (regularParameters == null) {
+				if ((infoField.getInfoFieldType() instanceof
+						BooleanInfoFieldType) &&
+					ArrayUtil.contains(checkboxNames, infoField.getName())) {
+
+					infoFieldValues.add(
+						_getInfoFieldValue(
+							infoField, themeDisplay.getLocale(), false));
+				}
+
 				continue;
 			}
 
@@ -168,6 +192,15 @@ public class InfoRequestFieldValuesProviderHelper {
 		}
 
 		return null;
+	}
+
+	private InfoFieldValue<Object> _getDateTimeInfoFieldValue(
+		InfoField<?> infoField, Locale locale, String value) {
+
+		LocalDateTime localDateTime = LocalDateTime.parse(
+			value, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
+
+		return _getInfoFieldValue(infoField, locale, localDateTime);
 	}
 
 	private InfoFieldValue<Object> _getFileInfoFieldValue(
@@ -261,6 +294,12 @@ public class InfoRequestFieldValuesProviderHelper {
 
 		if (infoField.getInfoFieldType() instanceof DateInfoFieldType) {
 			return _getDateInfoFieldValue(infoField, locale, value);
+		}
+
+		if ((infoField.getInfoFieldType() instanceof DateTimeInfoFieldType) &&
+			FeatureFlagManagerUtil.isEnabled("LPS-183727")) {
+
+			return _getDateTimeInfoFieldValue(infoField, locale, value);
 		}
 
 		if (infoField.getInfoFieldType() instanceof NumberInfoFieldType) {

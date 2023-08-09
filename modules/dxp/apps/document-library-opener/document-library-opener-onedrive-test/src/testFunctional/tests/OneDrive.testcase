@@ -1,7 +1,6 @@
 @component-name = "portal-document-management"
 definition {
 
-	property ci.retries.disabled = "true";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property test.run.environment = "EE";
@@ -59,6 +58,7 @@ definition {
 	@description = "This test ensures that an Excel sheet can be added via the OneDrive editor."
 	@priority = 5
 	test AddExcelSheet {
+		property portal.acceptance = "true";
 		property test.liferay.virtual.instance = "false";
 
 		var num = MathUtil.randomNumber(10);
@@ -249,6 +249,7 @@ definition {
 	@description = "This test ensures that a Powerpoint presentation can be added via the OneDrive editor."
 	@priority = 5
 	test AddPowerPointPresentation {
+		property portal.acceptance = "true";
 		property test.liferay.virtual.instance = "false";
 
 		var num = MathUtil.randomNumber(10);
@@ -295,6 +296,7 @@ definition {
 	@description = "This test ensures that a Word document can be added via the OneDrive editor. "
 	@priority = 5
 	test AddWordDocument {
+		property portal.acceptance = "true";
 		property test.liferay.virtual.instance = "false";
 
 		var num = MathUtil.randomNumber(10);
@@ -656,6 +658,7 @@ definition {
 	@description = "This test ensures that a Word document can be deleted."
 	@priority = 5
 	test DeleteWordDocument {
+		property portal.acceptance = "true";
 		property test.liferay.virtual.instance = "false";
 
 		var num = MathUtil.randomNumber(10);

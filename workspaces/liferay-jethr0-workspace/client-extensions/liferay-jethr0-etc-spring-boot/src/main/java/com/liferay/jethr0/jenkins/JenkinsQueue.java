@@ -5,17 +5,17 @@
 
 package com.liferay.jethr0.jenkins;
 
-import com.liferay.jethr0.build.Build;
-import com.liferay.jethr0.build.queue.BuildQueue;
-import com.liferay.jethr0.build.repository.BuildRepository;
-import com.liferay.jethr0.build.repository.BuildRunRepository;
-import com.liferay.jethr0.build.run.BuildRun;
+import com.liferay.jethr0.bui1d.Build;
+import com.liferay.jethr0.bui1d.queue.BuildQueue;
+import com.liferay.jethr0.bui1d.repository.BuildRepository;
+import com.liferay.jethr0.bui1d.repository.BuildRunRepository;
+import com.liferay.jethr0.bui1d.run.BuildRun;
 import com.liferay.jethr0.jenkins.node.JenkinsNode;
+import com.liferay.jethr0.jenkins.repository.JenkinsCohortRepository;
 import com.liferay.jethr0.jenkins.repository.JenkinsNodeRepository;
 import com.liferay.jethr0.jenkins.repository.JenkinsServerRepository;
 import com.liferay.jethr0.jenkins.server.JenkinsServer;
 import com.liferay.jethr0.jms.JMSEventHandler;
-import com.liferay.jethr0.util.StringUtil;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,32 +34,24 @@ import org.springframework.scheduling.annotation.Scheduled;
 public class JenkinsQueue {
 
 	public void initialize() {
-		if ((_jenkinsServerURLs != null) && !_jenkinsServerURLs.isEmpty()) {
-			for (String jenkinsServerURL : _jenkinsServerURLs.split(",")) {
-				JenkinsServer jenkinsServer = _jenkinsServerRepository.getByURL(
-					StringUtil.toURL(jenkinsServerURL));
+		_jenkinsCohortRepository.initialize();
+		_jenkinsNodeRepository.initialize();
+		_jenkinsServerRepository.initialize();
 
-				if (jenkinsServer != null) {
-					continue;
-				}
+		_jenkinsCohortRepository.setJenkinsServerRepository(
+			_jenkinsServerRepository);
 
-				jenkinsServer = _jenkinsServerRepository.add(jenkinsServerURL);
+		_jenkinsNodeRepository.setJenkinsServerRepository(
+			_jenkinsServerRepository);
 
-				_jenkinsNodeRepository.addAll(jenkinsServer);
-			}
-		}
+		_jenkinsServerRepository.setJenkinsCohortRepository(
+			_jenkinsCohortRepository);
+		_jenkinsServerRepository.setJenkinsNodeRepository(
+			_jenkinsNodeRepository);
 
-		for (JenkinsServer jenkinsServer : _jenkinsServerRepository.getAll()) {
-			for (JenkinsNode jenkinsNode :
-					_jenkinsNodeRepository.getAll(jenkinsServer)) {
-
-				jenkinsServer.addJenkinsNode(jenkinsNode);
-
-				jenkinsNode.setJenkinsServer(jenkinsServer);
-			}
-
-			jenkinsServer.update();
-		}
+		_jenkinsCohortRepository.initializeRelationships();
+		_jenkinsNodeRepository.initializeRelationships();
+		_jenkinsServerRepository.initializeRelationships();
 
 		invoke();
 	}
@@ -82,6 +74,10 @@ public class JenkinsQueue {
 	}
 
 	public void update() {
+		for (JenkinsServer jenkinsServer : _jenkinsServerRepository.getAll()) {
+			jenkinsServer.update();
+		}
+
 		_buildQueue.sort();
 
 		for (JenkinsServer jenkinsServer : _jenkinsServerRepository.getAll()) {
@@ -103,7 +99,7 @@ public class JenkinsQueue {
 
 				_jmsEventHandler.send(
 					jenkinsServer,
-					String.valueOf(buildRun.getInvokeJSONObject()));
+					String.valueOf(buildRun.getInvokeJSONObject(jenkinsNode)));
 
 				_buildRepository.update(build);
 				_buildRunRepository.update(buildRun);
@@ -121,6 +117,9 @@ public class JenkinsQueue {
 
 	@Autowired
 	private BuildRunRepository _buildRunRepository;
+
+	@Autowired
+	private JenkinsCohortRepository _jenkinsCohortRepository;
 
 	@Autowired
 	private JenkinsNodeRepository _jenkinsNodeRepository;

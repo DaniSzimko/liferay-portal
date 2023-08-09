@@ -37,6 +37,8 @@ import com.liferay.portal.kernel.transaction.TransactionConfig;
 import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 
+import java.math.BigDecimal;
+
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -149,8 +151,11 @@ public class CommerceShipmentGenerator {
 				_getRandomCommerceInventoryWarehouse(
 					commerceInventoryWarehouses);
 
+			BigDecimal commerceOrderItemQuantity =
+				commerceOrderItem.getQuantity();
+
 			int quantity =
-				commerceOrderItem.getQuantity() -
+				commerceOrderItemQuantity.intValue() -
 					commerceOrderItem.getShippedQuantity();
 
 			int commerceInventoryWarehouseItemQuantity =
@@ -165,7 +170,8 @@ public class CommerceShipmentGenerator {
 				null, commerceShipmentId,
 				commerceOrderItem.getCommerceOrderItemId(),
 				commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
-				commerceInventoryWarehouseItemQuantity, true, serviceContext);
+				commerceInventoryWarehouseItemQuantity, null, true,
+				serviceContext);
 		}
 	}
 

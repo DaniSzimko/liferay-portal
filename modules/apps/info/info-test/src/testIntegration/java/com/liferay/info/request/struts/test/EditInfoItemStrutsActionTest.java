@@ -19,10 +19,18 @@ import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalServ
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
 import com.liferay.layout.util.structure.LayoutStructure;
 import com.liferay.layout.util.structure.LayoutStructureItem;
+import com.liferay.list.type.entry.util.ListTypeEntryUtil;
+import com.liferay.list.type.model.ListTypeDefinition;
+import com.liferay.list.type.model.ListTypeEntry;
+import com.liferay.list.type.service.ListTypeDefinitionLocalService;
 import com.liferay.object.constants.ObjectActionKeys;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.field.builder.AttachmentObjectFieldBuilder;
+import com.liferay.object.field.builder.DateTimeObjectFieldBuilder;
+import com.liferay.object.field.builder.MultiselectPicklistObjectFieldBuilder;
+import com.liferay.object.field.builder.PicklistObjectFieldBuilder;
 import com.liferay.object.field.builder.TextObjectFieldBuilder;
 import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectDefinition;
@@ -63,6 +71,7 @@ import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.upload.FileItem;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -98,6 +107,7 @@ import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -290,10 +300,15 @@ public class EditInfoItemStrutsActionTest {
 		PipingServletResponse pipingServletResponse = new PipingServletResponse(
 			mockHttpServletResponse, unsyncStringWriter);
 
+		ListTypeEntry listTypeEntry1 = _listTypeEntries.get(0);
+		ListTypeEntry listTypeEntry2 = _listTypeEntries.get(1);
+
 		UploadPortletRequest uploadPortletRequest = _getUploadPortletRequest(
-			null, null, "-99999999999999.9999999999999999", 0, null,
+			null, null, "-99999999999999.9999999999999999",
+			Boolean.TRUE.toString(), 0, "2023-03-01", "2023-03-01T11:08", null,
 			"-999.9999999999999", "-123456", "-9007199254740991",
-			"<p>TITLE</p>", null, null);
+			Arrays.asList(listTypeEntry1.getKey(), listTypeEntry2.getKey()),
+			listTypeEntry1.getKey(), "<p>TITLE</p>", null, null);
 
 		_processEvents(uploadPortletRequest, mockHttpServletResponse, _user);
 
@@ -314,10 +329,15 @@ public class EditInfoItemStrutsActionTest {
 
 		ObjectEntry objectEntry = objectEntries.get(0);
 
+		ListTypeEntry listTypeEntry3 = _listTypeEntries.get(2);
+
 		uploadPortletRequest = _getUploadPortletRequest(
 			null, null, "99999999999999.9999999999999999",
-			objectEntry.getObjectEntryId(), null, "999.9999999999999", "123456",
-			"9007199254740991", "<p>SUBTITLE</p>", null, null);
+			Boolean.FALSE.toString(), objectEntry.getObjectEntryId(),
+			"2020-03-01", "2023-03-01T11:11", null, "999.9999999999999",
+			"123456", "9007199254740991",
+			Arrays.asList(listTypeEntry2.getKey(), listTypeEntry3.getKey()),
+			listTypeEntry2.getKey(), "<p>SUBTITLE</p>", null, null);
 
 		uploadPortletRequest.getParameterMap();
 
@@ -330,6 +350,20 @@ public class EditInfoItemStrutsActionTest {
 			objectEntry.getObjectEntryId());
 
 		Map<String, Serializable> values = objectEntry.getValues();
+
+		Assert.assertEquals(
+			Boolean.FALSE.toString(), String.valueOf(values.get("myBoolean")));
+		Assert.assertEquals(
+			DateUtil.formatDate("yyyy-MM-dd", "2020-03-01", LocaleUtil.US),
+			DateUtil.formatDate(
+				"yyyy-MM-dd", String.valueOf(values.get("myDate")),
+				LocaleUtil.US));
+		Assert.assertEquals(
+			DateUtil.parseDate(
+				"yyyy-MM-dd'T'HH:mm", "2023-03-01T11:11", LocaleUtil.US),
+			DateUtil.parseDate(
+				"yyyy-MM-dd HH:mm", String.valueOf(values.get("myDateTime")),
+				LocaleUtil.US));
 
 		DecimalFormat decimalFormat = new DecimalFormat(
 			"0", new DecimalFormatSymbols(LocaleUtil.ENGLISH));
@@ -346,7 +380,102 @@ public class EditInfoItemStrutsActionTest {
 			"99999999999999.9999999999999999",
 			String.valueOf(values.get("myPrecisionDecimal")));
 		Assert.assertEquals(
+			listTypeEntry2.getKey() + StringPool.COMMA_AND_SPACE +
+				listTypeEntry3.getKey(),
+			String.valueOf(values.get("myMultiselectPicklist")));
+		Assert.assertEquals(
+			listTypeEntry2.getKey(), String.valueOf(values.get("myPicklist")));
+		Assert.assertEquals(
 			"<p>SUBTITLE</p>", String.valueOf(values.get("myRichText")));
+	}
+
+	@FeatureFlags("LPS-183727")
+	@Test
+	public void testUpdateInfoItemWithCheckboxNames() throws Exception {
+		MockMultipartHttpServletRequest mockMultipartHttpServletRequest =
+			new MockMultipartHttpServletRequest();
+
+		mockMultipartHttpServletRequest.addHeader(
+			HttpHeaders.REFERER, "https://example.com/error");
+
+		Map<String, List<String>> regularParameters =
+			HashMapBuilder.<String, List<String>>put(
+				"classNameId", Collections.singletonList(_classNameId)
+			).put(
+				"formItemId", Collections.singletonList(_formItemId)
+			).put(
+				"groupId",
+				Collections.singletonList(String.valueOf(_group.getGroupId()))
+			).put(
+				"myBoolean", Collections.singletonList(Boolean.TRUE.toString())
+			).put(
+				"p_l_id",
+				Collections.singletonList(String.valueOf(_layout.getPlid()))
+			).put(
+				"p_l_mode", Collections.singletonList(Constants.VIEW)
+			).put(
+				"plid",
+				Collections.singletonList(String.valueOf(_layout.getPlid()))
+			).put(
+				"segmentsExperienceId",
+				Collections.singletonList(
+					String.valueOf(_defaultSegmentsExperienceId))
+			).build();
+
+		UploadPortletRequest uploadPortletRequest =
+			new UploadPortletRequestImpl(
+				new UploadServletRequestImpl(
+					mockMultipartHttpServletRequest, null, regularParameters),
+				null, RandomTestUtil.randomString());
+
+		MockHttpServletResponse mockHttpServletResponse =
+			new MockHttpServletResponse();
+
+		_processEvents(uploadPortletRequest, mockHttpServletResponse, _user);
+
+		_editInfoItemStrutsAction.execute(
+			uploadPortletRequest,
+			new PipingServletResponse(
+				mockHttpServletResponse, new UnsyncStringWriter()));
+
+		List<ObjectEntry> objectEntries =
+			_objectEntryLocalService.getObjectEntries(
+				0, _objectDefinition.getObjectDefinitionId(), QueryUtil.ALL_POS,
+				QueryUtil.ALL_POS);
+
+		ObjectEntry objectEntry = objectEntries.get(0);
+
+		regularParameters.put(
+			"checkboxNames", Collections.singletonList("myBoolean"));
+		regularParameters.put(
+			"classNameId", Collections.singletonList(_classNameId));
+		regularParameters.put(
+			"classPK",
+			Collections.singletonList(
+				String.valueOf(objectEntry.getObjectEntryId())));
+		regularParameters.remove("myBoolean");
+
+		mockHttpServletResponse = new MockHttpServletResponse();
+
+		uploadPortletRequest = new UploadPortletRequestImpl(
+			new UploadServletRequestImpl(
+				mockMultipartHttpServletRequest, null, regularParameters),
+			null, RandomTestUtil.randomString());
+
+		_processEvents(uploadPortletRequest, mockHttpServletResponse, _user);
+
+		_editInfoItemStrutsAction.execute(
+			uploadPortletRequest,
+			new PipingServletResponse(
+				mockHttpServletResponse, new UnsyncStringWriter()));
+
+		objectEntry = _objectEntryLocalService.fetchObjectEntry(
+			objectEntry.getObjectEntryId());
+
+		Map<String, Serializable> values = objectEntry.getValues();
+
+		Assert.assertEquals(
+			Boolean.FALSE.toString(), String.valueOf(values.get("myBoolean")));
 	}
 
 	private Layout _addLayout() throws Exception {
@@ -388,6 +517,29 @@ public class EditInfoItemStrutsActionTest {
 	}
 
 	private ObjectDefinition _addObjectDefinition() throws Exception {
+		_listTypeEntries.add(
+			ListTypeEntryUtil.createListTypeEntry(
+				RandomTestUtil.randomString(),
+				Collections.singletonMap(
+					LocaleUtil.US, RandomTestUtil.randomString())));
+		_listTypeEntries.add(
+			ListTypeEntryUtil.createListTypeEntry(
+				RandomTestUtil.randomString(),
+				Collections.singletonMap(
+					LocaleUtil.US, RandomTestUtil.randomString())));
+		_listTypeEntries.add(
+			ListTypeEntryUtil.createListTypeEntry(
+				RandomTestUtil.randomString(),
+				Collections.singletonMap(
+					LocaleUtil.US, RandomTestUtil.randomString())));
+
+		_listTypeDefinition =
+			_listTypeDefinitionLocalService.addListTypeDefinition(
+				null, TestPropsValues.getUserId(),
+				Collections.singletonMap(
+					LocaleUtil.US, RandomTestUtil.randomString()),
+				_listTypeEntries);
+
 		List<ObjectField> objectFields = Arrays.asList(
 			new AttachmentObjectFieldBuilder(
 			).labelMap(
@@ -400,10 +552,45 @@ public class EditInfoItemStrutsActionTest {
 					_createObjectFieldSetting("fileSource", "userComputer"),
 					_createObjectFieldSetting("maximumFileSize", "100"))
 			).build(),
+			new DateTimeObjectFieldBuilder(
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
+			).name(
+				"myDateTime"
+			).objectFieldSettings(
+				Collections.singletonList(
+					_createObjectFieldSetting(
+						ObjectFieldSettingConstants.NAME_TIME_STORAGE,
+						ObjectFieldSettingConstants.VALUE_CONVERT_TO_UTC))
+			).build(),
+			new PicklistObjectFieldBuilder(
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
+			).listTypeDefinitionId(
+				_listTypeDefinition.getListTypeDefinitionId()
+			).name(
+				"myPicklist"
+			).build(),
+			new MultiselectPicklistObjectFieldBuilder(
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
+			).listTypeDefinitionId(
+				_listTypeDefinition.getListTypeDefinitionId()
+			).name(
+				"myMultiselectPicklist"
+			).build(),
+			ObjectFieldUtil.createObjectField(
+				ObjectFieldConstants.BUSINESS_TYPE_DATE,
+				ObjectFieldConstants.DB_TYPE_DATE,
+				RandomTestUtil.randomString(), "myDate", false),
 			ObjectFieldUtil.createObjectField(
 				ObjectFieldConstants.BUSINESS_TYPE_DECIMAL,
 				ObjectFieldConstants.DB_TYPE_DOUBLE,
 				RandomTestUtil.randomString(), "myDecimal", false),
+			ObjectFieldUtil.createObjectField(
+				ObjectFieldConstants.BUSINESS_TYPE_BOOLEAN,
+				ObjectFieldConstants.DB_TYPE_BOOLEAN,
+				RandomTestUtil.randomString(), "myBoolean", false),
 			ObjectFieldUtil.createObjectField(
 				ObjectFieldConstants.BUSINESS_TYPE_INTEGER,
 				ObjectFieldConstants.DB_TYPE_INTEGER,
@@ -423,7 +610,7 @@ public class EditInfoItemStrutsActionTest {
 
 		ObjectDefinition objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				_user.getUserId(), false, false,
+				_user.getUserId(), 0, false, false,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				"A" + RandomTestUtil.randomString(), null,
 				"control_panel.sites",
@@ -551,9 +738,12 @@ public class EditInfoItemStrutsActionTest {
 
 	private UploadPortletRequest _getUploadPortletRequest(
 			String attachmentValue, String backURL, String bigDecimalValueInput,
-			long classPK, String displayPage, String doubleValueInput,
-			String integerValueInput, String longValueInput,
-			String richTextValueInput, String stringValue, String redirect)
+			String booleanValueInput, long classPK, String dateValueInput,
+			String dateTimeValueInput, String displayPage,
+			String doubleValueInput, String integerValueInput,
+			String longValueInput, List<String> multiselectPicklistValueInput,
+			String picklistValueInput, String richTextValueInput,
+			String stringValue, String redirect)
 		throws Exception {
 
 		MockMultipartHttpServletRequest mockMultipartHttpServletRequest =
@@ -617,6 +807,34 @@ public class EditInfoItemStrutsActionTest {
 					Collections.singletonList(
 						String.valueOf(_group.getGroupId()))
 				).put(
+					"myBoolean",
+					() -> {
+						if (booleanValueInput == null) {
+							return null;
+						}
+
+						return Collections.singletonList(booleanValueInput);
+					}
+				).put(
+					"myDate",
+					() -> {
+						if (Validator.isNotNull(dateValueInput)) {
+							return Collections.singletonList(dateValueInput);
+						}
+
+						return null;
+					}
+				).put(
+					"myDateTime",
+					() -> {
+						if (Validator.isNotNull(dateTimeValueInput)) {
+							return Collections.singletonList(
+								dateTimeValueInput);
+						}
+
+						return null;
+					}
+				).put(
 					"myDecimal",
 					() -> {
 						if (doubleValueInput == null) {
@@ -642,6 +860,24 @@ public class EditInfoItemStrutsActionTest {
 						}
 
 						return Collections.singletonList(longValueInput);
+					}
+				).put(
+					"myMultiselectPicklist",
+					() -> {
+						if (multiselectPicklistValueInput == null) {
+							return null;
+						}
+
+						return multiselectPicklistValueInput;
+					}
+				).put(
+					"myPicklist",
+					() -> {
+						if (picklistValueInput == null) {
+							return null;
+						}
+
+						return Collections.singletonList(picklistValueInput);
 					}
 				).put(
 					"myPrecisionDecimal",
@@ -733,9 +969,9 @@ public class EditInfoItemStrutsActionTest {
 			mockHttpServletResponse, unsyncStringWriter);
 
 		UploadPortletRequest uploadPortletRequest = _getUploadPortletRequest(
-			attachmentValue, backURL, bigDecimalValueInput, 0, displayPage,
-			doubleValueInput, integerValueInput, longValueInput, null,
-			stringValue, redirect);
+			attachmentValue, backURL, bigDecimalValueInput, null, 0, null, null,
+			displayPage, doubleValueInput, integerValueInput, longValueInput,
+			null, null, null, stringValue, redirect);
 
 		_processEvents(uploadPortletRequest, mockHttpServletResponse, _user);
 
@@ -832,8 +1068,8 @@ public class EditInfoItemStrutsActionTest {
 			mockHttpServletResponse, unsyncStringWriter);
 
 		UploadPortletRequest uploadPortletRequest = _getUploadPortletRequest(
-			null, null, bigDecimalValueInput, 0, null, null, integerValueInput,
-			longValueInput, null, null, null);
+			null, null, bigDecimalValueInput, null, 0, null, null, null, null,
+			integerValueInput, longValueInput, null, null, null, null, null);
 
 		_processEvents(uploadPortletRequest, mockHttpServletResponse, _user);
 
@@ -885,6 +1121,13 @@ public class EditInfoItemStrutsActionTest {
 	@Inject
 	private LayoutPageTemplateStructureLocalService
 		_layoutPageTemplateStructureLocalService;
+
+	private ListTypeDefinition _listTypeDefinition;
+
+	@Inject
+	private ListTypeDefinitionLocalService _listTypeDefinitionLocalService;
+
+	private final List<ListTypeEntry> _listTypeEntries = new ArrayList<>();
 
 	@DeleteAfterTestRun
 	private ObjectDefinition _objectDefinition;

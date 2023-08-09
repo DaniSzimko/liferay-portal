@@ -5,11 +5,12 @@
 
 package com.liferay.jethr0.event.handler;
 
-import com.liferay.jethr0.build.queue.BuildQueue;
-import com.liferay.jethr0.build.repository.BuildParameterRepository;
-import com.liferay.jethr0.build.repository.BuildRepository;
-import com.liferay.jethr0.build.repository.BuildRunRepository;
+import com.liferay.jethr0.bui1d.queue.BuildQueue;
+import com.liferay.jethr0.bui1d.repository.BuildParameterRepository;
+import com.liferay.jethr0.bui1d.repository.BuildRepository;
+import com.liferay.jethr0.bui1d.repository.BuildRunRepository;
 import com.liferay.jethr0.jenkins.JenkinsQueue;
+import com.liferay.jethr0.jenkins.repository.JenkinsCohortRepository;
 import com.liferay.jethr0.jenkins.repository.JenkinsNodeRepository;
 import com.liferay.jethr0.jenkins.repository.JenkinsServerRepository;
 import com.liferay.jethr0.jms.JMSEventHandler;
@@ -38,6 +39,10 @@ public class EventHandlerContext {
 
 	public BuildRunRepository getBuildRunRepository() {
 		return _buildRunRepository;
+	}
+
+	public JenkinsCohortRepository getJenkinsCohortRepository() {
+		return _jenkinsCohortRepository;
 	}
 
 	public JenkinsNodeRepository getJenkinsNodeRepository() {
@@ -75,6 +80,9 @@ public class EventHandlerContext {
 
 	@Autowired
 	private BuildRunRepository _buildRunRepository;
+
+	@Autowired
+	private JenkinsCohortRepository _jenkinsCohortRepository;
 
 	@Autowired
 	private JenkinsNodeRepository _jenkinsNodeRepository;

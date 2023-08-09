@@ -17,6 +17,36 @@ jest.mock('frontend-js-web', () => ({
 	sub: jest.fn((langKey, arg) => langKey.replace('x', arg)),
 }));
 
+jest.mock(
+	'../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/services/serviceFetch',
+	() => jest.fn(() => Promise.resolve({}))
+);
+
+jest.mock(
+	'../../../../../../../../../src/main/resources/META-INF/resources/page_editor/app/config/index',
+	() => ({
+		config: {
+			availableLanguages: {
+				en_US: {
+					default: false,
+					displayName: 'English (United States)',
+					languageIcon: 'en-us',
+					languageId: 'en_US',
+					w3cLanguageId: 'en-US',
+				},
+			},
+			selectedMappingTypes: {
+				subtype: {
+					id: 'subtype',
+				},
+				type: {
+					id: 'type',
+				},
+			},
+		},
+	})
+);
+
 function getStateWithConfig(config = {}) {
 	return {
 		fragmentEntryLinks: {
@@ -71,10 +101,40 @@ describe('EditableActionPanel', () => {
 		expect(screen.queryByText('error-interaction')).not.toBeInTheDocument();
 	});
 
+	it('does not render interaction selector after unmapping', () => {
+		renderActionPanel({
+			state: getStateWithConfig({
+				mappedAction: {},
+			}),
+		});
+
+		expect(
+			screen.queryByText('success-interaction')
+		).not.toBeInTheDocument();
+
+		expect(screen.queryByText('error-interaction')).not.toBeInTheDocument();
+	});
+
 	it('renders interaction and reload selectors when an action is selected', () => {
 		renderActionPanel({
 			state: getStateWithConfig({
-				mappedAction: {title: 'action'},
+				mappedAction: {fieldId: 'actionFieldId'},
+			}),
+		});
+
+		expect(screen.getByText('success-interaction')).toBeInTheDocument();
+		expect(
+			screen.getByText('reload-page-after-success')
+		).toBeInTheDocument();
+
+		expect(screen.getByText('error-interaction')).toBeInTheDocument();
+		expect(screen.getByText('reload-page-after-error')).toBeInTheDocument();
+	});
+
+	it('renders interaction and reload selectors when an action is selected in DPTs', () => {
+		renderActionPanel({
+			state: getStateWithConfig({
+				mappedAction: {mappedField: 'mappedField'},
 			}),
 		});
 
@@ -90,7 +150,7 @@ describe('EditableActionPanel', () => {
 	it('renders text and preview selectors when selecting notification', () => {
 		renderActionPanel({
 			state: getStateWithConfig({
-				mappedAction: {title: 'action'},
+				mappedAction: {fieldId: 'actionFieldId'},
 				onSuccess: {interaction: 'notification'},
 			}),
 		});
@@ -104,7 +164,7 @@ describe('EditableActionPanel', () => {
 	it('renders layout selector and does not allow to reload when selecting Go to page', () => {
 		renderActionPanel({
 			state: getStateWithConfig({
-				mappedAction: {title: 'action'},
+				mappedAction: {fieldId: 'actionFieldId'},
 				onSuccess: {interaction: 'page'},
 			}),
 		});
@@ -118,7 +178,7 @@ describe('EditableActionPanel', () => {
 	it('renders url input and does not allow to reload when selecting External URL', () => {
 		renderActionPanel({
 			state: getStateWithConfig({
-				mappedAction: {title: 'action'},
+				mappedAction: {fieldId: 'actionFieldId'},
 				onSuccess: {interaction: 'url'},
 			}),
 		});

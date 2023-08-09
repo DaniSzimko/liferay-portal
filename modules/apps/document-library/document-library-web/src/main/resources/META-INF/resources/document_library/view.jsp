@@ -41,6 +41,8 @@ DLViewDisplayContext dlViewDisplayContext = new DLViewDisplayContext(dlAdminDisp
 		<clay:management-toolbar
 			additionalProps='<%=
 				HashMapBuilder.<String, Object>put(
+					"bulkCopyURL", dlViewDisplayContext.getCopyURL()
+				).put(
 					"bulkPermissionsConfiguration",
 					HashMapBuilder.<String, Object>put(
 						"defaultModelClassName", Folder.class.getSimpleName()
@@ -131,7 +133,7 @@ DLViewDisplayContext dlViewDisplayContext = new DLViewDisplayContext(dlAdminDisp
 				</liferay-frontend:sidebar-panel>
 
 				<div class="sidenav-content <%= portletTitleBasedNavigation ? "container-fluid container-fluid-max-xl container-view" : StringPool.BLANK %>">
-					<c:if test='<%= dlAdminDisplayContext.hasFilterParameters() && ListUtil.isNotEmpty(dlAdminDisplayContext.getMountFolders()) && FeatureFlagManagerUtil.isEnabled("LPS-84424") %>'>
+					<c:if test="<%= dlAdminDisplayContext.hasFilterParameters() && ListUtil.isNotEmpty(dlAdminDisplayContext.getMountFolders()) %>">
 						<clay:alert
 							displayType="info"
 							message="filters-only-apply-to-documents-in-local-repositories"

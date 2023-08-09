@@ -21,7 +21,7 @@ public interface EntityRepository<T extends Entity> {
 
 	public T add(T entity);
 
-	public void addAll(Set<T> entities);
+	public Set<T> addAll(Set<T> entities);
 
 	public Set<T> getAll();
 
@@ -30,6 +30,8 @@ public interface EntityRepository<T extends Entity> {
 	public EntityDALO<T> getEntityDALO();
 
 	public void initialize();
+
+	public void initializeRelationships();
 
 	public void remove(Set<T> entities);
 

@@ -8,7 +8,7 @@ package com.liferay.portal.security.ldap.internal.exportimport;
 import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.expando.kernel.model.ExpandoTableConstants;
 import com.liferay.expando.kernel.service.ExpandoValueLocalService;
-import com.liferay.expando.kernel.util.ExpandoConverterUtil;
+import com.liferay.expando.util.ExpandoConverterUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.bean.BeanProperties;
@@ -50,6 +50,7 @@ import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.Props;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PwdGenerator;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.exportimport.UserImporter;
@@ -1318,14 +1319,8 @@ public class LDAPUserImporterImpl implements LDAPUserImporter, UserImporter {
 
 		_addUserGroupsNotAddedByLDAPImport(user.getUserId(), newUserGroupIds);
 
-		Set<Long> oldUserGroupIds = new LinkedHashSet<>();
-
-		List<UserGroup> oldUserGroups =
-			_userGroupLocalService.getUserUserGroups(user.getUserId());
-
-		for (UserGroup oldUserGroup : oldUserGroups) {
-			oldUserGroupIds.add(oldUserGroup.getUserGroupId());
-		}
+		Set<Long> oldUserGroupIds = SetUtil.fromArray(
+			_userLocalService.getUserGroupPrimaryKeys(user.getUserId()));
 
 		if (!oldUserGroupIds.equals(newUserGroupIds)) {
 			long[] userGroupIds = ArrayUtil.toLongArray(newUserGroupIds);

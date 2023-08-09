@@ -14,6 +14,8 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowInstance;
 import com.liferay.portal.kernel.workflow.WorkflowInstanceManagerUtil;
 import com.liferay.portal.kernel.workflow.search.WorkflowModelSearchResult;
+import com.liferay.portal.workflow.comparator.WorkflowComparatorFactory;
+import com.liferay.portal.workflow.manager.WorkflowLogManager;
 import com.liferay.portal.workflow.web.internal.search.WorkflowInstanceSearch;
 
 import java.util.Objects;
@@ -26,10 +28,14 @@ public class MyWorkflowInstanceViewDisplayContext
 
 	public MyWorkflowInstanceViewDisplayContext(
 			LiferayPortletRequest liferayPortletRequest,
-			LiferayPortletResponse liferayPortletResponse)
+			LiferayPortletResponse liferayPortletResponse,
+			WorkflowComparatorFactory workflowComparatorFactory,
+			WorkflowLogManager workflowLogManager)
 		throws PortalException {
 
-		super(liferayPortletRequest, liferayPortletResponse);
+		super(
+			liferayPortletRequest, liferayPortletResponse,
+			workflowComparatorFactory, workflowLogManager);
 	}
 
 	@Override

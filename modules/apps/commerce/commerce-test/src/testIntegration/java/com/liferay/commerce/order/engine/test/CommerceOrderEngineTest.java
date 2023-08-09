@@ -194,11 +194,13 @@ public class CommerceOrderEngineTest {
 		CommerceInventoryWarehouse commerceInventoryWarehouse =
 			commerceInventoryWarehouses.get(0);
 
+		BigDecimal quantity = commerceOrderItem.getQuantity();
+
 		_commerceShipmentItemLocalService.addCommerceShipmentItem(
 			null, _commerceShipment1.getCommerceShipmentId(),
 			commerceOrderItem.getCommerceOrderItemId(),
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
-			commerceOrderItem.getQuantity(), true, _serviceContext);
+			quantity.intValue(), null, true, _serviceContext);
 
 		_commerceShipment1 = _commerceShipmentLocalService.updateStatus(
 			_commerceShipment1.getCommerceShipmentId(),
@@ -273,11 +275,13 @@ public class CommerceOrderEngineTest {
 		CommerceInventoryWarehouse commerceInventoryWarehouse =
 			commerceInventoryWarehouses.get(0);
 
+		BigDecimal quantity = commerceOrderItem.getQuantity();
+
 		_commerceShipmentItemLocalService.addCommerceShipmentItem(
 			null, _commerceShipment1.getCommerceShipmentId(),
 			commerceOrderItem.getCommerceOrderItemId(),
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
-			commerceOrderItem.getQuantity() / 2, true, _serviceContext);
+			quantity.intValue() / 2, null, true, _serviceContext);
 
 		_commerceShipment1 = _commerceShipmentLocalService.updateStatus(
 			_commerceShipment1.getCommerceShipmentId(),
@@ -338,11 +342,13 @@ public class CommerceOrderEngineTest {
 		CommerceInventoryWarehouse commerceInventoryWarehouse =
 			commerceInventoryWarehouses.get(0);
 
+		BigDecimal quantity = commerceOrderItem.getQuantity();
+
 		_commerceShipmentItemLocalService.addCommerceShipmentItem(
 			null, _commerceShipment1.getCommerceShipmentId(),
 			commerceOrderItem.getCommerceOrderItemId(),
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
-			commerceOrderItem.getQuantity(), true, _serviceContext);
+			quantity.intValue(), null, true, _serviceContext);
 
 		_commerceShipment1 = _commerceShipmentLocalService.updateStatus(
 			_commerceShipment1.getCommerceShipmentId(),
@@ -790,11 +796,13 @@ public class CommerceOrderEngineTest {
 		CommerceInventoryWarehouse commerceInventoryWarehouse =
 			commerceInventoryWarehouses.get(0);
 
+		BigDecimal quantity = commerceOrderItem.getQuantity();
+
 		_commerceShipmentItemLocalService.addCommerceShipmentItem(
 			null, _commerceShipment1.getCommerceShipmentId(),
 			commerceOrderItem.getCommerceOrderItemId(),
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
-			commerceOrderItem.getQuantity() / 2, true, _serviceContext);
+			quantity.intValue() / 2, null, true, _serviceContext);
 
 		_commerceShipment1 = _commerceShipmentLocalService.updateStatus(
 			_commerceShipment1.getCommerceShipmentId(),
@@ -808,14 +816,13 @@ public class CommerceOrderEngineTest {
 			_commerceOrder.getOrderStatus());
 
 		int remainingQuantity =
-			commerceOrderItem.getQuantity() -
-				commerceOrderItem.getShippedQuantity();
+			quantity.intValue() - commerceOrderItem.getShippedQuantity();
 
 		_commerceShipmentItemLocalService.addCommerceShipmentItem(
 			null, _commerceShipment2.getCommerceShipmentId(),
 			commerceOrderItem.getCommerceOrderItemId(),
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
-			remainingQuantity, true, _serviceContext);
+			remainingQuantity, null, true, _serviceContext);
 
 		_commerceShipment2 = _commerceShipmentLocalService.updateStatus(
 			_commerceShipment2.getCommerceShipmentId(),
@@ -902,11 +909,13 @@ public class CommerceOrderEngineTest {
 		CommerceInventoryWarehouse commerceInventoryWarehouse =
 			commerceInventoryWarehouses.get(0);
 
+		BigDecimal quantity = commerceOrderItem.getQuantity();
+
 		_commerceShipmentItemLocalService.addCommerceShipmentItem(
 			null, _commerceShipment1.getCommerceShipmentId(),
 			commerceOrderItem.getCommerceOrderItemId(),
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
-			commerceOrderItem.getQuantity() / 2, true, _serviceContext);
+			quantity.intValue() / 2, null, true, _serviceContext);
 
 		_commerceShipment1 = _commerceShipmentLocalService.updateStatus(
 			_commerceShipment1.getCommerceShipmentId(),
@@ -920,14 +929,13 @@ public class CommerceOrderEngineTest {
 			_commerceOrder.getOrderStatus());
 
 		int remainingQuantity =
-			commerceOrderItem.getQuantity() -
-				commerceOrderItem.getShippedQuantity();
+			quantity.intValue() - commerceOrderItem.getShippedQuantity();
 
 		_commerceShipmentItemLocalService.addCommerceShipmentItem(
 			null, _commerceShipment2.getCommerceShipmentId(),
 			commerceOrderItem.getCommerceOrderItemId(),
 			commerceInventoryWarehouse.getCommerceInventoryWarehouseId(),
-			remainingQuantity, true, _serviceContext);
+			remainingQuantity, null, true, _serviceContext);
 
 		_commerceShipment2 = _commerceShipmentLocalService.updateStatus(
 			_commerceShipment2.getCommerceShipmentId(),

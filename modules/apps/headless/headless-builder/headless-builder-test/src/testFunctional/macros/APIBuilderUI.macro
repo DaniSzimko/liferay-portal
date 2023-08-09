@@ -1,0 +1,62 @@
+definition {
+
+	macro changePublicationStatus {
+		ApplicationsMenu.gotoPortlet(
+			category = "Object",
+			panel = "Control Panel",
+			portlet = "API Builder");
+
+		Click(
+			key_title = ${key_title},
+			locator1 = "APIBuilder#DROPDOWN_MENU");
+
+		Click(locator1 = "APIBuilder#CHANGE_PUBLICATION_STATUS_BUTTON");
+
+		if (isSet(unpublish)) {
+			Click(locator1 = "Button#UNPUBLISH");
+		}
+	}
+
+	macro createAPIApplication {
+		Variables.assertDefined(parameterList = ${title});
+
+		ApplicationsMenu.gotoPortlet(
+			category = "Object",
+			panel = "Control Panel",
+			portlet = "API Builder");
+
+		if (isSet(addByPlus)) {
+			Click(locator1 = "Button#PLUS");
+		}
+		else {
+			Click(locator1 = "APIBuilder#ADD_NEW_API_APPLICATION");
+		}
+
+		Type(
+			key_fieldLabel = "Title",
+			locator1 = "Modal#INPUT_WITH_LABEL",
+			value1 = ${title});
+
+		Click(locator1 = "APIBuilder#CREATE_BUTTON");
+	}
+
+	macro goToEditAPIApplicationPage {
+		ApplicationsMenu.gotoPortlet(
+			category = "Object",
+			panel = "Control Panel",
+			portlet = "API Builder");
+
+		Click(
+			key_title = ${key_title},
+			locator1 = "APIBuilder#DROPDOWN_MENU");
+
+		Click(locator1 = "APIBuilder#EDIT_BUTTON");
+	}
+
+	macro publishApplication {
+		APIBuilderUI.goToEditAPIApplicationPage(key_title = ${key_title});
+
+		Click(locator1 = "APIBuilder#PUBLISH_BUTTON");
+	}
+
+}

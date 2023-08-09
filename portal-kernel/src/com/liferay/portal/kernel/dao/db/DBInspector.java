@@ -150,6 +150,18 @@ public class DBInspector {
 				return false;
 			}
 
+			Integer expectedColumnDecimalDigits = _getByColumnType(
+				columnType, DB::getSQLTypeDecimalDigits);
+
+			if (expectedColumnDecimalDigits != DB.SQL_SIZE_NONE) {
+				int actualColumnDecimalDigits = resultSet.getInt(
+					"DECIMAL_DIGITS");
+
+				if (expectedColumnDecimalDigits != actualColumnDecimalDigits) {
+					return false;
+				}
+			}
+
 			boolean expectedColumnNullable = _isColumnNullable(columnType);
 
 			int actualColumnNullable = resultSet.getInt("NULLABLE");
@@ -351,8 +363,7 @@ public class DBInspector {
 			}
 		}
 
-		Integer dataTypeSize = _getByColumnType(
-			columnType, DB::getSQLVarcharSize);
+		Integer dataTypeSize = _getByColumnType(columnType, DB::getSQLTypeSize);
 
 		if (dataTypeSize != null) {
 			return dataTypeSize;

@@ -8,18 +8,23 @@ package com.liferay.object.web.internal.util;
 import com.liferay.info.field.InfoField;
 import com.liferay.info.field.InfoFieldValue;
 import com.liferay.info.field.type.DateInfoFieldType;
+import com.liferay.info.field.type.DateTimeInfoFieldType;
 import com.liferay.info.item.InfoItemFieldValues;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.scope.ObjectScopeProvider;
 import com.liferay.object.scope.ObjectScopeProviderRegistry;
 import com.liferay.object.service.ObjectEntryLocalServiceUtil;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 
 import java.text.Format;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -88,6 +93,19 @@ public class ObjectEntryUtil {
 					"yyyy-MM-dd");
 
 				properties.put(infoField.getName(), format.format(value));
+			}
+			else if (Objects.equals(
+						DateTimeInfoFieldType.INSTANCE,
+						infoField.getInfoFieldType()) &&
+					 (value instanceof LocalDateTime) &&
+					 FeatureFlagManagerUtil.isEnabled("LPS-183727")) {
+
+				DateTimeFormatter dateTimeFormatter =
+					DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+				properties.put(
+					infoField.getName(),
+					dateTimeFormatter.format((LocalDateTime)value));
 			}
 			else {
 				properties.put(infoField.getName(), value);

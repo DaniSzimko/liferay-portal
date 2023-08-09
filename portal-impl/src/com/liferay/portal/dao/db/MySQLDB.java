@@ -233,12 +233,13 @@ public class MySQLDB extends BaseDB {
 
 	private static final String[] _MYSQL = {
 		"##", "1", "0", "'1970-01-01'", "now()", " longblob", " longblob",
-		" tinyint", " datetime(6)", " double", " integer", " bigint",
-		" longtext", " longtext", " varchar", "  auto_increment", "commit"
+		" decimal(30, 16)", " tinyint", " datetime(6)", " double", " integer",
+		" bigint", " longtext", " longtext", " varchar", "  auto_increment",
+		"commit"
 	};
 
 	private static final int[] _SQL_TYPES = {
-		Types.LONGVARBINARY, Types.LONGVARBINARY, Types.TINYINT,
+		Types.LONGVARBINARY, Types.LONGVARBINARY, Types.DECIMAL, Types.TINYINT,
 		Types.TIMESTAMP, Types.DOUBLE, Types.INTEGER, Types.BIGINT,
 		Types.LONGVARCHAR, Types.LONGVARCHAR, Types.VARCHAR
 	};

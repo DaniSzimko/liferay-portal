@@ -106,6 +106,16 @@ public class SkuSerDes {
 			sb.append(String.valueOf(sku.getAvailability()));
 		}
 
+		if (sku.getBackOrderAllowed() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"backOrderAllowed\": ");
+
+			sb.append(sku.getBackOrderAllowed());
+		}
+
 		if (sku.getDepth() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -301,6 +311,16 @@ public class SkuSerDes {
 			sb.append(sku.getPurchasable());
 		}
 
+		if (sku.getReplacementSku() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"replacementSku\": ");
+
+			sb.append(String.valueOf(sku.getReplacementSku()));
+		}
+
 		if (sku.getReplacementSkuExternalReferenceCode() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -421,6 +441,14 @@ public class SkuSerDes {
 		}
 		else {
 			map.put("availability", String.valueOf(sku.getAvailability()));
+		}
+
+		if (sku.getBackOrderAllowed() == null) {
+			map.put("backOrderAllowed", null);
+		}
+		else {
+			map.put(
+				"backOrderAllowed", String.valueOf(sku.getBackOrderAllowed()));
 		}
 
 		if (sku.getDepth() == null) {
@@ -556,6 +584,13 @@ public class SkuSerDes {
 			map.put("purchasable", String.valueOf(sku.getPurchasable()));
 		}
 
+		if (sku.getReplacementSku() == null) {
+			map.put("replacementSku", null);
+		}
+		else {
+			map.put("replacementSku", String.valueOf(sku.getReplacementSku()));
+		}
+
 		if (sku.getReplacementSkuExternalReferenceCode() == null) {
 			map.put("replacementSkuExternalReferenceCode", null);
 		}
@@ -648,6 +683,11 @@ public class SkuSerDes {
 				if (jsonParserFieldValue != null) {
 					sku.setAvailability(
 						AvailabilitySerDes.toDTO((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "backOrderAllowed")) {
+				if (jsonParserFieldValue != null) {
+					sku.setBackOrderAllowed((Boolean)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "depth")) {
@@ -743,6 +783,13 @@ public class SkuSerDes {
 			else if (Objects.equals(jsonParserFieldName, "purchasable")) {
 				if (jsonParserFieldValue != null) {
 					sku.setPurchasable((Boolean)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "replacementSku")) {
+				if (jsonParserFieldValue != null) {
+					sku.setReplacementSku(
+						ReplacementSkuSerDes.toDTO(
+							(String)jsonParserFieldValue));
 				}
 			}
 			else if (Objects.equals(

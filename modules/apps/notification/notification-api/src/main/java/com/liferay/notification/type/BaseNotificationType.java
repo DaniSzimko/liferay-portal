@@ -62,6 +62,7 @@ public abstract class BaseNotificationType implements NotificationType {
 		NotificationQueueEntry notificationQueueEntry =
 			notificationQueueEntryLocalService.createNotificationQueueEntry(0L);
 
+		notificationQueueEntry.setCompanyId(user.getCompanyId());
 		notificationQueueEntry.setUserId(user.getUserId());
 		notificationQueueEntry.setUserName(user.getFullName());
 
@@ -111,14 +112,14 @@ public abstract class BaseNotificationType implements NotificationType {
 					notificationRecipientId);
 				notificationRecipientSetting.setName(entry.getKey());
 
-				if (entry.getValue() instanceof String) {
-					notificationRecipientSetting.setValue(
-						String.valueOf(entry.getValue()));
-				}
-				else {
+				if (entry.getValue() instanceof LinkedHashMap) {
 					notificationRecipientSetting.setValueMap(
 						LocalizedMapUtil.getLocalizedMap(
 							(LinkedHashMap)entry.getValue()));
+				}
+				else {
+					notificationRecipientSetting.setValue(
+						String.valueOf(entry.getValue()));
 				}
 
 				notificationRecipientSettings.add(notificationRecipientSetting);

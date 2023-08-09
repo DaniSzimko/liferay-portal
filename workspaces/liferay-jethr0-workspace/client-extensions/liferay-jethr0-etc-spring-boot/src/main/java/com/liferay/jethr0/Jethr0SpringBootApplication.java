@@ -6,12 +6,14 @@
 package com.liferay.jethr0;
 
 import com.liferay.client.extension.util.spring.boot.ClientExtensionUtilSpringBootComponentScan;
-import com.liferay.jethr0.build.queue.BuildQueue;
+import com.liferay.jethr0.bui1d.queue.BuildQueue;
 import com.liferay.jethr0.entity.repository.EntityRepository;
 import com.liferay.jethr0.event.handler.EventHandlerContext;
 import com.liferay.jethr0.jenkins.JenkinsQueue;
 import com.liferay.jethr0.jms.JMSEventHandler;
 import com.liferay.jethr0.project.queue.ProjectQueue;
+
+import java.util.Map;
 
 import javax.jms.ConnectionFactory;
 
@@ -45,17 +47,12 @@ public class Jethr0SpringBootApplication {
 		eventHandlerContext.setJMSEventHandler(
 			configurableApplicationContext.getBean(JMSEventHandler.class));
 
-		for (String beanDefinitionName :
-				configurableApplicationContext.getBeanDefinitionNames()) {
+		Map<String, EntityRepository> entityRepositories =
+			configurableApplicationContext.getBeansOfType(
+				EntityRepository.class);
 
-			Object bean = configurableApplicationContext.getBean(
-				beanDefinitionName);
-
-			if (bean instanceof EntityRepository) {
-				EntityRepository entityRepository = (EntityRepository)bean;
-
-				entityRepository.initialize();
-			}
+		for (EntityRepository entityRepository : entityRepositories.values()) {
+			entityRepository.initialize();
 		}
 
 		ProjectQueue projectQueue = configurableApplicationContext.getBean(

@@ -26,6 +26,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.PropsKeys;
@@ -373,8 +374,13 @@ public abstract class BaseDB implements DB {
 	}
 
 	@Override
-	public Integer getSQLVarcharSize(String templateType) {
-		return _sqlVarcharSizes.get(templateType);
+	public Integer getSQLTypeDecimalDigits(String templateType) {
+		return _sqlTypeDecimalDigits.get(templateType);
+	}
+
+	@Override
+	public Integer getSQLTypeSize(String templateType) {
+		return _sqlTypeSizes.get(templateType);
 	}
 
 	@Override
@@ -791,18 +797,44 @@ public abstract class BaseDB implements DB {
 			_templates.put(TEMPLATE[i], actual[i]);
 		}
 
-		String[] templateTypes = ArrayUtil.clone(TEMPLATE, 5, 15);
+		String[] templateTypes = ArrayUtil.clone(TEMPLATE, 5, 16);
 
 		for (int i = 0; i < templateTypes.length; i++) {
-			_sqlTypes.put(StringUtil.trim(templateTypes[i]), getSQLTypes()[i]);
-		}
+			String actualType = StringUtil.trim(
+				_templates.get(templateTypes[i]));
 
-		String[] sqlTypeStringAndText = ArrayUtil.clone(TEMPLATE, 12, 14);
+			String templateType = StringUtil.trim(templateTypes[i]);
 
-		for (int i = 0; i < sqlTypeStringAndText.length; i++) {
-			_sqlVarcharSizes.put(
-				StringUtil.trim(sqlTypeStringAndText[i]),
-				getSQLVarcharSizes()[i]);
+			_sqlTypes.put(templateType, getSQLTypes()[i]);
+
+			Matcher matcher = _sqlTypeDecimalDigitsPattern.matcher(actualType);
+
+			_sqlTypeDecimalDigits.put(
+				templateType,
+				matcher.matches() ? GetterUtil.getInteger(matcher.group(1)) :
+					DB.SQL_SIZE_NONE);
+
+			if (templateType.equals("DATE")) {
+				_sqlTypeSizes.put(templateType, DB.SQL_SIZE_NONE);
+
+				continue;
+			}
+			else if (templateType.equals("STRING") ||
+					 templateType.equals("TEXT")) {
+
+				_sqlTypeSizes.put(
+					templateType, getSQLVarcharSizes().get(templateType));
+
+				continue;
+			}
+
+			matcher = _sqlTypeSizePattern.matcher(actualType);
+
+			_sqlTypeSizes.put(
+				templateType,
+				matcher.matches() ?
+					GetterUtil.getInteger(matcher.group(1), DB.SQL_SIZE_NONE) :
+						DB.SQL_SIZE_NONE);
 		}
 	}
 
@@ -845,23 +877,30 @@ public abstract class BaseDB implements DB {
 	}
 
 	protected String[] buildColumnTypeTokens(String line) {
-		String[] words = StringUtil.split(line, CharPool.SPACE);
+		String nullable = StringPool.BLANK;
 
-		String nullable = "";
+		String parsedLine = StringUtil.removeLast(line, ";");
 
-		if (words.length == 6) {
+		if (StringUtil.endsWith(parsedLine, " not null")) {
 			nullable = "not null";
+
+			parsedLine = parsedLine.substring(0, parsedLine.length() - 9);
 		}
-		else if (words.length == 5) {
+		else if (StringUtil.endsWith(parsedLine, " null")) {
 			nullable = "null";
-		}
-		else if (words.length == 4) {
-			if (words[3].endsWith(";")) {
-				words[3] = words[3].substring(0, words[3].length() - 1);
-			}
+
+			parsedLine = parsedLine.substring(0, parsedLine.length() - 5);
 		}
 
-		return new String[] {words[1], words[2], "", words[3], nullable};
+		String[] words = StringUtil.split(parsedLine, CharPool.SPACE);
+
+		String type = words[3];
+
+		if (words.length > 4) {
+			type += StringPool.SPACE + words[4];
+		}
+
+		return new String[] {words[1], words[2], "", type, nullable};
 	}
 
 	protected String[] buildTableNameTokens(String line) {
@@ -1273,8 +1312,12 @@ public abstract class BaseDB implements DB {
 
 	protected abstract int[] getSQLTypes();
 
-	protected int[] getSQLVarcharSizes() {
-		return new int[] {-1, -1};
+	protected Map<String, Integer> getSQLVarcharSizes() {
+		return HashMapBuilder.put(
+			"STRING", SQL_SIZE_NONE
+		).put(
+			"TEXT", SQL_SIZE_NONE
+		).build();
 	}
 
 	protected abstract String[] getTemplate();
@@ -1358,8 +1401,9 @@ public abstract class BaseDB implements DB {
 
 	protected static final String[] TEMPLATE = {
 		"##", "TRUE", "FALSE", "'01/01/1970'", "CURRENT_TIMESTAMP", " BLOB",
-		" SBLOB", " BOOLEAN", " DATE", " DOUBLE", " INTEGER", " LONG",
-		" STRING", " TEXT", " VARCHAR", " IDENTITY", "COMMIT_TRANSACTION"
+		" SBLOB", " BIGDECIMAL", " BOOLEAN", " DATE", " DOUBLE", " INTEGER",
+		" LONG", " STRING", " TEXT", " VARCHAR", " IDENTITY",
+		"COMMIT_TRANSACTION"
 	};
 
 	protected static final Pattern columnTypePattern = Pattern.compile(
@@ -1497,6 +1541,10 @@ public abstract class BaseDB implements DB {
 		"([^,(\\s]+)\\[\\$COLUMN_LENGTH:(\\d+)\\$\\]");
 	private static final Pattern _defaultValuePattern = Pattern.compile(
 		"^('?)(\\d+|.*)\\1(::.*| )?", Pattern.CASE_INSENSITIVE);
+	private static final Pattern _sqlTypeDecimalDigitsPattern = Pattern.compile(
+		"^\\w+(?:\\(\\d+,\\s(\\d+)\\))", Pattern.CASE_INSENSITIVE);
+	private static final Pattern _sqlTypeSizePattern = Pattern.compile(
+		"^\\w+(?:\\((\\d+).*\\))", Pattern.CASE_INSENSITIVE);
 	private static final Pattern _templatePattern;
 
 	static {
@@ -1527,8 +1575,9 @@ public abstract class BaseDB implements DB {
 	private final DBType _dbType;
 	private final int _majorVersion;
 	private final int _minorVersion;
+	private final Map<String, Integer> _sqlTypeDecimalDigits = new HashMap<>();
 	private final Map<String, Integer> _sqlTypes = new HashMap<>();
-	private final Map<String, Integer> _sqlVarcharSizes = new HashMap<>();
+	private final Map<String, Integer> _sqlTypeSizes = new HashMap<>();
 	private boolean _supportsStringCaseSensitiveQuery = true;
 	private final Map<String, String> _templates = new HashMap<>();
 
