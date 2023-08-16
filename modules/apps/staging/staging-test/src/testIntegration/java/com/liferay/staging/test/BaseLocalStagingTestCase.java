@@ -15,9 +15,9 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -27,6 +27,7 @@ import java.io.Serializable;
 
 import java.util.Map;
 
+import org.junit.After;
 import org.junit.Before;
 
 /**
@@ -51,6 +52,24 @@ public abstract class BaseLocalStagingTestCase {
 		liveLayout = LayoutLocalServiceUtil.getLayoutByUuidAndGroupId(
 			stagingLayout.getUuid(), liveGroup.getGroupId(),
 			stagingLayout.isPrivateLayout());
+	}
+
+	@After
+	public void tearDown() throws PortalException {
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(liveGroup.getGroupId());
+
+		try {
+			StagingLocalServiceUtil.disableStaging(liveGroup, serviceContext);
+		}
+		catch (Exception exception) {
+		}
+
+		try {
+			GroupLocalServiceUtil.deleteGroup(liveGroup);
+		}
+		catch (Exception exception) {
+		}
 	}
 
 	protected String[] getNotStagedPortletIds() {
@@ -90,9 +109,7 @@ public abstract class BaseLocalStagingTestCase {
 			Boolean.FALSE.toString());
 	}
 
-	@DeleteAfterTestRun
 	protected Group liveGroup;
-
 	protected Layout liveLayout;
 	protected Group stagingGroup;
 	protected Layout stagingLayout;
