@@ -23,6 +23,7 @@
 
 		<%
 		List<String> portletIds = new ArrayList<>();
+		ProcessSummaryDisplayContext processSummaryDisplayContext = new ProcessSummaryDisplayContext();
 
 		for (String key : parameterMap.keySet()) {
 			String changesetPortletName = StringBundler.concat(PortletDataHandlerKeys.PORTLET_DATA, StringPool.UNDERLINE, ChangesetPortletKeys.CHANGESET);
@@ -144,6 +145,8 @@
 					if ((currentAdditions == null) || (currentDeletions == null)) {
 						continue;
 					}
+
+					String assetTitle = processSummaryDisplayContext.getAssetTitle(taskContextMap);
 				%>
 
 					<div class="process-summary-subsection">
@@ -154,6 +157,10 @@
 
 							<c:if test='<%= currentDeletions.get("total") > 0 %>'>
 								<i>(<%= LanguageUtil.format(resourceBundle, "x-items-deleted", currentDeletions.get("total")) %>)</i>
+							</c:if>
+
+							<c:if test="<%= assetTitle != null %>">
+								<label>Title: <%=assetTitle%></label>
 							</c:if>
 						</div>
 

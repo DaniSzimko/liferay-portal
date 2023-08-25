@@ -5,9 +5,22 @@
 
 package com.liferay.exportimport.web.internal.display.context;
 
+import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.asset.kernel.service.AssetEntryLocalServiceUtil;
+import com.liferay.asset.kernel.service.persistence.AssetEntryUtil;
+import com.liferay.exportimport.constants.ExportImportBackgroundTaskContextMapConstants;
+import com.liferay.exportimport.kernel.lar.ExportImportDateUtil;
+import com.liferay.exportimport.kernel.lar.ExportImportHelper;
 import com.liferay.exportimport.kernel.lar.ExportImportHelperUtil;
+import com.liferay.exportimport.kernel.lar.PortletDataContext;
+import com.liferay.exportimport.kernel.lar.PortletDataContextFactory;
+import com.liferay.exportimport.kernel.lar.PortletDataContextFactoryUtil;
+import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerRegistryUtil;
+import com.liferay.exportimport.kernel.model.ExportImportConfiguration;
 import com.liferay.exportimport.kernel.staging.LayoutStagingUtil;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.backgroundtask.BackgroundTask;
+import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -19,13 +32,23 @@ import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutRevision;
 import com.liferay.portal.kernel.model.LayoutSetBranch;
+import com.liferay.portal.kernel.model.Portlet;
+import com.liferay.portal.kernel.service.ClassNameLocalServiceUtil;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutRevisionLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutSetLocalServiceUtil;
+import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.DateRange;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.LongWrapper;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.kernel.zip.ZipWriter;
+import org.osgi.service.component.annotations.Reference;
 
 import java.io.Serializable;
 
@@ -35,6 +58,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -58,6 +82,30 @@ public class ProcessSummaryDisplayContext {
 		}
 
 		return new ArrayList<>(pageNames);
+	}
+
+	public String getAssetTitle(Map<String, ?> taskContextMap)
+		throws Exception {
+
+		long classNameId = ClassNameLocalServiceUtil.getClassNameId(_journalArticleClassName);
+
+		Map<String, LongWrapper> resourcePrimKeys = (Map<String, LongWrapper>) taskContextMap.get(
+			ExportImportBackgroundTaskContextMapConstants.STAGED_MODEL_RESOURCE_PRIM_KEYS);
+
+		Map<String, LongWrapper> modelAdditionCounters = (Map<String, LongWrapper>) taskContextMap.get(
+			ExportImportBackgroundTaskContextMapConstants.MODEL_ADDITION_COUNTERS);
+
+		LongWrapper modelAdditionCounter = modelAdditionCounters.get(_journalArticleClassName);
+
+		if(!resourcePrimKeys.isEmpty() && modelAdditionCounter.getValue() <= 1){
+			LongWrapper resourcePrimKey = resourcePrimKeys.get(_journalArticleClassName);
+			if(classNameId > 0 && resourcePrimKey.getValue() > 0){
+				AssetEntry assetEntry = AssetEntryLocalServiceUtil.fetchEntry(classNameId,resourcePrimKeys.get(_journalArticleClassName).getValue());
+				return assetEntry.getTitleCurrentValue();
+			}
+		}
+
+		return null;
 	}
 
 	public String getPagesDescription(
@@ -189,5 +237,16 @@ public class ProcessSummaryDisplayContext {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ProcessSummaryDisplayContext.class);
+
+	@Reference
+	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private ExportImportHelper _exportImportHelper;
+
+	@Reference
+	private PortletDataContextFactory _portletDataContextFactory;
+
+	private static final String _journalArticleClassName = "com.liferay.journal.model.JournalArticle";
 
 }

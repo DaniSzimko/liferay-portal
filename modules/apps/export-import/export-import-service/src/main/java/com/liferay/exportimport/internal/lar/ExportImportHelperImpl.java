@@ -787,10 +787,14 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 			HashMap<String, LongWrapper> modelAdditionCounters = new HashMap<>(
 				manifestSummary.getModelAdditionCounters());
 
+			HashMap<String, Long> stagedModelResourcePrimKeys = new HashMap<>(manifestSummary.getStagedModelResourcePrimKeys());
+
 			taskContextMap.put(
 				ExportImportBackgroundTaskContextMapConstants.
 					MODEL_ADDITION_COUNTERS,
 				modelAdditionCounters);
+
+			taskContextMap.put(ExportImportBackgroundTaskContextMapConstants.STAGED_MODEL_RESOURCE_PRIM_KEYS, stagedModelResourcePrimKeys);
 
 			HashMap<String, LongWrapper> modelDeletionCounters = new HashMap<>(
 				manifestSummary.getModelDeletionCounters());
@@ -1017,6 +1021,11 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 			if (modelDeletionCount > 0) {
 				element.addAttribute(
 					"deletion-count", String.valueOf(modelDeletionCount));
+			}
+
+			long stagedModelResourcePrimKey = manifestSummary.getStagedModelResourcePrimKey(manifestSummaryKey);
+			if(stagedModelResourcePrimKey > 0){
+				element.addAttribute("model-resource-primary-key", String.valueOf(stagedModelResourcePrimKey));
 			}
 		}
 	}
@@ -1577,6 +1586,12 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 
 				_manifestSummary.addModelDeletionCount(
 					manifestSummaryKey, modelDeletionCount);
+
+				long modelResourcePrimkey = GetterUtil.getLong(
+					element.attributeValue("model-resource-primary-key"));
+
+				_manifestSummary.addResourcePrimKey(
+					manifestSummaryKey, modelResourcePrimkey);
 			}
 		}
 

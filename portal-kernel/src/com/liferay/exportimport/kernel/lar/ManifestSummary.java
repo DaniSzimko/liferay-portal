@@ -72,6 +72,13 @@ public class ManifestSummary implements Serializable {
 		addModelAdditionCount(getManifestSummaryKey(stagedModelType), count);
 	}
 
+	public void addResourcePrimKey(String className,long resourcePrimKey){
+		if(resourcePrimKey > 0){
+			LongWrapper resourcePrimKeyWrapper = new LongWrapper(resourcePrimKey);
+			_stagedModelResourcePrimKeys.put(className, resourcePrimKeyWrapper);
+		}
+	}
+
 	public void addModelAdditionCount(String manifestSummaryKey, long count) {
 		LongWrapper modelAdditionCounter = _modelAdditionCounters.get(
 			manifestSummaryKey);
@@ -125,6 +132,7 @@ public class ManifestSummary implements Serializable {
 
 		manifestSummary._manifestSummaryKeys = new HashSet<>(
 			_manifestSummaryKeys);
+		manifestSummary._stagedModelResourcePrimKeys = new HashMap<>(_stagedModelResourcePrimKeys);
 		manifestSummary._modelAdditionCounters = new HashMap<>(
 			_modelAdditionCounters);
 		manifestSummary._modelDeletionCounters = new HashMap<>(
@@ -196,6 +204,10 @@ public class ManifestSummary implements Serializable {
 		return modelAdditionCounter.getValue();
 	}
 
+	public Map<String, LongWrapper> getStagedModelResourcePrimKeys(){
+		return _stagedModelResourcePrimKeys;
+	}
+
 	public Map<String, LongWrapper> getModelAdditionCounters() {
 		return _modelAdditionCounters;
 	}
@@ -234,6 +246,14 @@ public class ManifestSummary implements Serializable {
 		}
 
 		return modelDeletionCount;
+	}
+
+	public long getStagedModelResourcePrimKey(String manifestSummaryKey){
+		if (!_stagedModelResourcePrimKeys.containsKey(manifestSummaryKey)) {
+			return -1;
+		}
+
+		return _stagedModelResourcePrimKeys.get(manifestSummaryKey).getValue();
 	}
 
 	public long getModelDeletionCount(String manifestSummaryKey) {
@@ -400,6 +420,7 @@ public class ManifestSummary implements Serializable {
 	private List<Portlet> _layoutPortlets = new ArrayList<>();
 	private Set<String> _manifestSummaryKeys = new HashSet<>();
 	private Map<String, LongWrapper> _modelAdditionCounters = new HashMap<>();
+	private Map<String, LongWrapper> _stagedModelResourcePrimKeys = new HashMap<>();
 	private Map<String, LongWrapper> _modelDeletionCounters = new HashMap<>();
 
 }
