@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
@@ -31,18 +32,24 @@ import com.liferay.portal.kernel.model.SystemEvent;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.service.SystemEventLocalServiceUtil;
+import com.liferay.portal.kernel.service.persistence.SystemEventUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Zsolt Berentey
@@ -82,6 +89,21 @@ public class DeletionSystemEventExporter {
 			exportedSystemEventIds = _exportDeletionSystemEvents(
 				portletDataContext, rootElement,
 				deletionSystemEventStagedModelTypes);
+		}
+
+		if (!Validator.isNull(exportedSystemEventIds)) {
+			for(Long systemEventId : exportedSystemEventIds) {
+				SystemEvent systemEvent =
+					SystemEventUtil.fetchByPrimaryKey(systemEventId);
+				String extraData = systemEvent.getExtraData();
+				JSONObject jsonObject =
+					JSONFactoryUtil.createJSONObject(extraData);
+				if(extraData.contains("assetTitle")) {
+					String assetTitle = jsonObject.get("assetTitle").toString();
+					portletDataContext.getManifestSummary().addAssetTitle(
+						systemEvent.getClassName(), assetTitle);
+				}
+			}
 		}
 
 		portletDataContext.addZipEntry(

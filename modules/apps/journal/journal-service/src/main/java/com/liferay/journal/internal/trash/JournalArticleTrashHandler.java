@@ -8,6 +8,7 @@ package com.liferay.journal.internal.trash;
 import com.liferay.asset.kernel.AssetRendererFactoryRegistryUtil;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.exportimport.kernel.staging.StagingUtil;
 import com.liferay.journal.internal.util.JournalUtil;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.model.JournalArticleResource;
@@ -17,7 +18,11 @@ import com.liferay.journal.service.JournalArticleResourceLocalService;
 import com.liferay.journal.service.JournalFolderLocalService;
 import com.liferay.journal.util.JournalHelper;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.ContainerModel;
+import com.liferay.portal.kernel.model.SystemEvent;
+import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.TrashedModel;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.SearchContext;
@@ -29,6 +34,7 @@ import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.SystemEventLocalServiceUtil;
 import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.trash.TrashRenderer;
 import com.liferay.portal.kernel.util.Portal;
@@ -210,6 +216,25 @@ public class JournalArticleTrashHandler extends BaseJournalTrashHandler {
 		}
 
 		return false;
+	}
+
+	@Override
+	public SystemEvent addDeletionSystemEvent(
+		long userId, long groupId, long classPK, String classUuid,
+		String referrerClassName) throws PortalException {
+
+		JournalArticle article = _journalArticleLocalService.getLatestArticle(
+			classPK);
+
+		JSONObject extraDataJSONObject = JSONUtil.put("assetTitle", article.getTitleCurrentValue());
+
+		extraDataJSONObject.put("inTrash", true);
+
+		return SystemEventLocalServiceUtil.addSystemEvent(
+			userId, groupId, getSystemEventClassName(), classPK, classUuid,
+			referrerClassName, SystemEventConstants.TYPE_DELETE,
+			extraDataJSONObject.toString());
+
 	}
 
 	@Override
