@@ -46,8 +46,11 @@ import com.liferay.portal.kernel.util.DateRange;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LongWrapper;
 import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.zip.ZipWriter;
+import com.liferay.trash.model.TrashEntry;
+import com.liferay.trash.service.persistence.TrashEntryUtil;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.Serializable;
@@ -87,21 +90,28 @@ public class ProcessSummaryDisplayContext {
 	public String getAssetTitle(Map<String, ?> taskContextMap)
 		throws Exception {
 
-		long classNameId = ClassNameLocalServiceUtil.getClassNameId(_journalArticleClassName);
-
-		Map<String, LongWrapper> resourcePrimKeys = (Map<String, LongWrapper>) taskContextMap.get(
-			ExportImportBackgroundTaskContextMapConstants.STAGED_MODEL_RESOURCE_PRIM_KEYS);
+		Map<String, String> assetTitles = (Map<String, String>) taskContextMap.get(
+			ExportImportBackgroundTaskContextMapConstants.ASSET_TITLES);
 
 		Map<String, LongWrapper> modelAdditionCounters = (Map<String, LongWrapper>) taskContextMap.get(
 			ExportImportBackgroundTaskContextMapConstants.MODEL_ADDITION_COUNTERS);
 
+		Map<String, LongWrapper> modelDeletionCounters = (Map<String, LongWrapper>) taskContextMap.get(
+			ExportImportBackgroundTaskContextMapConstants.MODEL_DELETION_COUNTERS);
+
 		LongWrapper modelAdditionCounter = modelAdditionCounters.get(_journalArticleClassName);
 
-		if(!resourcePrimKeys.isEmpty() && modelAdditionCounter.getValue() <= 1){
-			LongWrapper resourcePrimKey = resourcePrimKeys.get(_journalArticleClassName);
-			if(classNameId > 0 && resourcePrimKey.getValue() > 0){
-				AssetEntry assetEntry = AssetEntryLocalServiceUtil.fetchEntry(classNameId,resourcePrimKeys.get(_journalArticleClassName).getValue());
-				return assetEntry.getTitleCurrentValue();
+		LongWrapper modelDeletionCounter = modelDeletionCounters.get(_journalArticleClassName);
+
+		if (!Validator.isNull(modelAdditionCounter) && !Validator.isNull(modelDeletionCounter)) {
+			if(modelAdditionCounter.getValue()+modelDeletionCounter.getValue() > 1){
+				return null;
+			}
+		}
+
+		if(!assetTitles.isEmpty()){
+			if(!Validator.isNull(assetTitles.get(_journalArticleClassName))){
+				return assetTitles.get(_journalArticleClassName);
 			}
 		}
 
