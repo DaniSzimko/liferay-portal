@@ -505,7 +505,7 @@ public class JournalArticleStagedModelDataHandler
 
 		_exportFriendlyURLEntries(portletDataContext, article);
 
-		portletDataContext.getManifestSummary().addResourcePrimKey(JournalArticle.class.getName(), article.getResourcePrimKey());
+		portletDataContext.getManifestSummary().addAssetTitle(JournalArticle.class.getName(), article.getTitle(article.getDefaultLanguageId()));
 
 		portletDataContext.addClassedModel(
 			articleElement, ExportImportPathUtil.getModelPath(article),
