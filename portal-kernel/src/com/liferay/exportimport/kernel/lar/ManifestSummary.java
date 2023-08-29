@@ -72,10 +72,9 @@ public class ManifestSummary implements Serializable {
 		addModelAdditionCount(getManifestSummaryKey(stagedModelType), count);
 	}
 
-	public void addResourcePrimKey(String className,long resourcePrimKey){
-		if(resourcePrimKey > 0){
-			LongWrapper resourcePrimKeyWrapper = new LongWrapper(resourcePrimKey);
-			_stagedModelResourcePrimKeys.put(className, resourcePrimKeyWrapper);
+	public void addAssetTitle(String className,String assetTitle){
+		if(!Validator.isNull(assetTitle)){
+			_stagedModelAssetTitles.put(className, assetTitle);
 		}
 	}
 
@@ -132,7 +131,7 @@ public class ManifestSummary implements Serializable {
 
 		manifestSummary._manifestSummaryKeys = new HashSet<>(
 			_manifestSummaryKeys);
-		manifestSummary._stagedModelResourcePrimKeys = new HashMap<>(_stagedModelResourcePrimKeys);
+		manifestSummary._stagedModelAssetTitles = new HashMap<>(_stagedModelAssetTitles);
 		manifestSummary._modelAdditionCounters = new HashMap<>(
 			_modelAdditionCounters);
 		manifestSummary._modelDeletionCounters = new HashMap<>(
@@ -204,8 +203,8 @@ public class ManifestSummary implements Serializable {
 		return modelAdditionCounter.getValue();
 	}
 
-	public Map<String, LongWrapper> getStagedModelResourcePrimKeys(){
-		return _stagedModelResourcePrimKeys;
+	public Map<String, String> getStagedModelAssetTitles(){
+		return _stagedModelAssetTitles;
 	}
 
 	public Map<String, LongWrapper> getModelAdditionCounters() {
@@ -248,12 +247,12 @@ public class ManifestSummary implements Serializable {
 		return modelDeletionCount;
 	}
 
-	public long getStagedModelResourcePrimKey(String manifestSummaryKey){
-		if (!_stagedModelResourcePrimKeys.containsKey(manifestSummaryKey)) {
-			return -1;
+	public String getStagedModelAssetTitle(String manifestSummaryKey){
+		if (!_stagedModelAssetTitles.containsKey(manifestSummaryKey)) {
+			return "";
 		}
 
-		return _stagedModelResourcePrimKeys.get(manifestSummaryKey).getValue();
+		return _stagedModelAssetTitles.get(manifestSummaryKey);
 	}
 
 	public long getModelDeletionCount(String manifestSummaryKey) {
@@ -420,7 +419,7 @@ public class ManifestSummary implements Serializable {
 	private List<Portlet> _layoutPortlets = new ArrayList<>();
 	private Set<String> _manifestSummaryKeys = new HashSet<>();
 	private Map<String, LongWrapper> _modelAdditionCounters = new HashMap<>();
-	private Map<String, LongWrapper> _stagedModelResourcePrimKeys = new HashMap<>();
+	private Map<String, String> _stagedModelAssetTitles = new HashMap<>();
 	private Map<String, LongWrapper> _modelDeletionCounters = new HashMap<>();
 
 }

@@ -787,14 +787,14 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 			HashMap<String, LongWrapper> modelAdditionCounters = new HashMap<>(
 				manifestSummary.getModelAdditionCounters());
 
-			HashMap<String, Long> stagedModelResourcePrimKeys = new HashMap<>(manifestSummary.getStagedModelResourcePrimKeys());
-
 			taskContextMap.put(
 				ExportImportBackgroundTaskContextMapConstants.
 					MODEL_ADDITION_COUNTERS,
 				modelAdditionCounters);
 
-			taskContextMap.put(ExportImportBackgroundTaskContextMapConstants.STAGED_MODEL_RESOURCE_PRIM_KEYS, stagedModelResourcePrimKeys);
+			HashMap<String, String> stagedModelAssetTitles = new HashMap<>(manifestSummary.getStagedModelAssetTitles());
+
+			taskContextMap.put(ExportImportBackgroundTaskContextMapConstants.ASSET_TITLES, stagedModelAssetTitles);
 
 			HashMap<String, LongWrapper> modelDeletionCounters = new HashMap<>(
 				manifestSummary.getModelDeletionCounters());
@@ -1023,9 +1023,9 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 					"deletion-count", String.valueOf(modelDeletionCount));
 			}
 
-			long stagedModelResourcePrimKey = manifestSummary.getStagedModelResourcePrimKey(manifestSummaryKey);
-			if(stagedModelResourcePrimKey > 0){
-				element.addAttribute("model-resource-primary-key", String.valueOf(stagedModelResourcePrimKey));
+			String stagedModelAssetTitle = manifestSummary.getStagedModelAssetTitle(manifestSummaryKey);
+			if(!Validator.isNull(stagedModelAssetTitle)){
+				element.addAttribute("asset-title", stagedModelAssetTitle);
 			}
 		}
 	}
@@ -1587,11 +1587,11 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 				_manifestSummary.addModelDeletionCount(
 					manifestSummaryKey, modelDeletionCount);
 
-				long modelResourcePrimkey = GetterUtil.getLong(
-					element.attributeValue("model-resource-primary-key"));
+				String assetTitle = GetterUtil.getString(
+					element.attributeValue("asset-title"));
 
-				_manifestSummary.addResourcePrimKey(
-					manifestSummaryKey, modelResourcePrimkey);
+				_manifestSummary.addAssetTitle(
+					manifestSummaryKey, assetTitle);
 			}
 		}
 

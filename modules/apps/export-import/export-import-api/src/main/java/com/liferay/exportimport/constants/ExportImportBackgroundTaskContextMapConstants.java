@@ -20,6 +20,6 @@ public class ExportImportBackgroundTaskContextMapConstants {
 	public static final String MODEL_DELETION_COUNTERS =
 		"modelDeletionCounters";
 
-	public static final String STAGED_MODEL_RESOURCE_PRIM_KEYS = "stagedModelResourcePrimKeys";
+	public static final String ASSET_TITLES = "assetTitles";
 
 }
