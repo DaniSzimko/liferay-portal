@@ -48,6 +48,15 @@
 
 			<div class="sheet">
 				<div class="panel-group panel-group-flush">
+					<c:if test='<%= FeatureFlagManagerUtil.isEnabled("LPS-190129") %>'>
+						<clay:alert
+							displayType="warning"
+							message="publish-small-incremental-changes-to-avoid-large-publishing-processes-that-can-take-a-long-time-to-execute"
+							symbol="page"
+							title="recommendation"
+						/>
+					</c:if>
+
 					<aui:fieldset>
 						<c:choose>
 							<c:when test="<%= exportImportConfiguration == null %>">
