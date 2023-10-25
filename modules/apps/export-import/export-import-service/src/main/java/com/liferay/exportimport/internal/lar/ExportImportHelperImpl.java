@@ -6,6 +6,7 @@
 package com.liferay.exportimport.internal.lar;
 
 import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
+import com.liferay.exportimport.configuration.ExportImportServiceConfiguration;
 import com.liferay.exportimport.constants.ExportImportBackgroundTaskContextMapConstants;
 import com.liferay.exportimport.kernel.lar.DefaultConfigurationPortletDataHandler;
 import com.liferay.exportimport.kernel.lar.ExportImportHelper;
@@ -399,8 +400,15 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 				parentLayouts = getMissingParentLayouts(layout, targetGroupId);
 			}
 
+			StagingConfiguration stagingConfiguration =
+				_configurationProvider.getCompanyConfiguration(
+					StagingConfiguration.class,
+					CompanyThreadLocal.getCompanyId());
+
+			boolean publishParentLayout = stagingConfiguration.publishParentLayoutsByDefault();
+
 			for (Layout parentLayout : parentLayouts) {
-				if (!layouts.contains(parentLayout)) {
+				if (!layouts.contains(parentLayout) && publishParentLayout) {
 					layouts.add(parentLayout);
 				}
 			}
