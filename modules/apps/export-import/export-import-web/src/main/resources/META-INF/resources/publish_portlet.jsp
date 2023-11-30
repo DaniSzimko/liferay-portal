@@ -38,6 +38,10 @@ if (!layout.isTypeControlPanel()) {
 			errorMessageKey = "this-widget-is-placed-in-a-page-that-does-not-exist-in-the-live-site-publish-the-page-first";
 		}
 
+		if (remoteLayoutPlid <= 0) {
+			errorMessageKey = "this-widget-is-placed-in-a-page-that-does-not-exist-in-the-live-site-publish-the-page-first";
+		}
+
 		if (targetLayout != null) {
 			LayoutType layoutType = targetLayout.getLayoutType();
 

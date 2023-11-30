@@ -1878,9 +1878,15 @@ public class StagingImpl implements Staging {
 
 		Layout layout = _layoutLocalService.fetchLayout(plid);
 
-		return LayoutServiceHttp.getLayoutPlid(
-			httpPrincipal, layout.getUuid(),
-			stagingGroup.getRemoteLiveGroupId(), layout.isPrivateLayout());
+		Layout remoteLayout = LayoutServiceHttp.fetchLayout(
+			httpPrincipal, stagingGroup.getRemoteLiveGroupId(),
+			layout.isPrivateLayout(), layout.getLayoutId());
+
+		if (remoteLayout != null) {
+			return remoteLayout.getPlid();
+		}
+
+		return 0;
 	}
 
 	@Override
