@@ -25,6 +25,10 @@ public class RenameRankingUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
+		if (!hasTable("JSONStorageEntry")) {
+			return;
+		}
+
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"update JSONStorageEntry set classNameId = ? where " +
 					"classNameId = ?")) {
@@ -43,7 +47,7 @@ public class RenameRankingUpgradeProcess extends UpgradeProcess {
 
 				preparedStatement.setLong(2, className.getClassNameId());
 
-				preparedStatement.execute();
+				preparedStatement.executeUpdate();
 			}
 		}
 	}

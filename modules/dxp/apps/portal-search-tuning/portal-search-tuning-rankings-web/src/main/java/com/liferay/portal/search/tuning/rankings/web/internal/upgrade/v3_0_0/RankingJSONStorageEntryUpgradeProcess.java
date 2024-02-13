@@ -29,6 +29,10 @@ public class RankingJSONStorageEntryUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
+		if (!hasTable("JSONStorageEntry")) {
+			return;
+		}
+
 		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				"select jsonStorageEntryId, valueString from " +
 					"JSONStorageEntry where classNameId = ? and key_ = ?");
@@ -48,10 +52,9 @@ public class RankingJSONStorageEntryUpgradeProcess extends UpgradeProcess {
 			preparedStatement2.setString(1, "status");
 
 			while (resultSet.next()) {
-				preparedStatement2.setLong(
-					3, resultSet.getLong("jsonStorageEntryId"));
+				String inactiveValueString = resultSet.getString("valueString");
 
-				if (resultSet.getBoolean("valueString")) {
+				if (Boolean.valueOf(inactiveValueString)) {
 					preparedStatement2.setString(
 						2,
 						StringBundler.concat(
@@ -68,8 +71,13 @@ public class RankingJSONStorageEntryUpgradeProcess extends UpgradeProcess {
 							StringPool.QUOTE));
 				}
 
-				preparedStatement2.execute();
+				preparedStatement2.setLong(
+					3, resultSet.getLong("jsonStorageEntryId"));
+
+				preparedStatement2.addBatch();
 			}
+
+			preparedStatement2.executeBatch();
 		}
 	}
 
