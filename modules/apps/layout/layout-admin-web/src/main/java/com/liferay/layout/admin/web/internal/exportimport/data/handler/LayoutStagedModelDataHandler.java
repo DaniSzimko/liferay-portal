@@ -441,10 +441,10 @@ public class LayoutStagedModelDataHandler
 			(Map<Long, Layout>)portletDataContext.getNewPrimaryKeysMap(
 				Layout.class + ".layout");
 
-		long layoutId = GetterUtil.getLong(
-			referenceElement.attributeValue("layout-id"));
+		long layoutPlid = GetterUtil.getLong(
+			referenceElement.attributeValue("layout-plid"));
 
-		layouts.put(layoutId, existingLayout);
+		layouts.put(layoutPlid, existingLayout);
 	}
 
 	@Override
@@ -460,8 +460,6 @@ public class LayoutStagedModelDataHandler
 
 		long layoutId = GetterUtil.getLong(
 			layoutElement.attributeValue("layout-id"));
-
-		long oldLayoutId = layoutId;
 
 		boolean privateLayout = false;
 
@@ -554,7 +552,7 @@ public class LayoutStagedModelDataHandler
 			if (_sites.isLayoutModifiedSinceLastMerge(existingLayout) ||
 				!_isLayoutOutdated(existingLayout, layout)) {
 
-				layouts.put(oldLayoutId, existingLayout);
+				layouts.put(layout.getPlid(), existingLayout);
 
 				return;
 			}
@@ -678,7 +676,7 @@ public class LayoutStagedModelDataHandler
 
 		layoutPlids.put(layout.getPlid(), importedLayout.getPlid());
 
-		layouts.put(oldLayoutId, importedLayout);
+		layouts.put(layout.getPlid(), importedLayout);
 
 		portletDataContext.setPlid(importedLayout.getPlid());
 
@@ -702,7 +700,7 @@ public class LayoutStagedModelDataHandler
 
 			Layout draftLayout = layouts.get(
 				GetterUtil.getLong(
-					layoutElement.attributeValue("draft-layout-id")));
+					layoutElement.attributeValue("draft-layout-plid")));
 
 			draftLayout = _layoutLocalService.getLayout(draftLayout.getPlid());
 
@@ -807,7 +805,7 @@ public class LayoutStagedModelDataHandler
 			}
 
 			if (importedParentLayout == null) {
-				importedParentLayout = layouts.get(parentLayoutId);
+				importedParentLayout = layouts.get(parentPlid);
 			}
 
 			parentPlid = importedParentLayout.getPlid();
@@ -1325,6 +1323,8 @@ public class LayoutStagedModelDataHandler
 				"draft-layout-uuid", draftLayout.getUuid());
 			layoutElement.addAttribute(
 				"draft-layout-id", String.valueOf(draftLayout.getLayoutId()));
+			layoutElement.addAttribute(
+				"draft-layout-plid", String.valueOf(draftLayout.getPlid()));
 		}
 	}
 
@@ -2843,6 +2843,8 @@ public class LayoutStagedModelDataHandler
 		layoutElement.addAttribute("layout-uuid", layout.getUuid());
 		layoutElement.addAttribute(
 			"layout-id", String.valueOf(layout.getLayoutId()));
+		layoutElement.addAttribute(
+			"layout-plid", String.valueOf(layout.getPlid()));
 		layoutElement.addAttribute(
 			"layout-parent-layout-id",
 			String.valueOf(layout.getParentLayoutId()));

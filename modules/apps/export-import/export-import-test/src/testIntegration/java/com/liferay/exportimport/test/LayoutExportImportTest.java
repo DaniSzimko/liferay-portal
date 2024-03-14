@@ -10,6 +10,12 @@ import com.liferay.exportimport.kernel.exception.LARTypeException;
 import com.liferay.exportimport.kernel.lar.ExportImportHelperUtil;
 import com.liferay.exportimport.kernel.lar.PortletDataHandlerKeys;
 import com.liferay.exportimport.test.util.lar.BaseExportImportTestCase;
+import com.liferay.fragment.model.FragmentEntryLink;
+import com.liferay.fragment.service.FragmentEntryLinkLocalService;
+import com.liferay.fragment.service.persistence.FragmentEntryLinkUtil;
+import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
+import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
+import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.portal.kernel.exception.LocaleException;
 import com.liferay.portal.kernel.log.Log;
@@ -26,18 +32,26 @@ import com.liferay.portal.kernel.service.LayoutSetPrototypeLocalServiceUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.segments.service.SegmentsExperienceLocalService;
+
+import java.io.InputStream;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Scanner;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -157,6 +171,91 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 			importedGroup = originalImportedGroup;
 			group = originalGroup;
 		}
+	}
+
+	@Test
+	public void testExportImportLayoutFromMasterLayoutPageTemplateAndDraftLayoutMappingOnImportSide()
+		throws Exception {
+
+		// make sure that the masterLayoutPageTemplate's layoutId is the
+		// same as contentLayout's layoutId
+
+		LayoutTestUtil.addTypePortletLayout(group, true);
+
+		LayoutPageTemplateEntry masterLayoutPageTemplateEntry =
+			_layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
+				TestPropsValues.getUserId(), group.getGroupId(), 0,
+				"Test Master Page",
+				LayoutPageTemplateEntryTypeConstants.MASTER_LAYOUT, 0,
+				WorkflowConstants.STATUS_APPROVED,
+				ServiceContextTestUtil.getServiceContext(group.getGroupId()));
+
+		FragmentEntryLink fragmentEntryLink = FragmentEntryLinkUtil.create(
+			RandomTestUtil.randomLong());
+
+		Layout masterPageTemplateLayout = LayoutLocalServiceUtil.getLayout(
+			masterLayoutPageTemplateEntry.getPlid());
+
+		fragmentEntryLink.setPlid(
+			masterPageTemplateLayout.fetchDraftLayout(
+			).getPlid());
+
+		Layout contentLayout = LayoutTestUtil.addTypeContentLayout(
+			group, "Test Page From Master Layout Page Template");
+
+		String editableValuesJSON = _getContent(
+			"fragment_entry_link_editable_values_with_configuration.json");
+
+		String replacedValues = StringUtil.replace(
+			editableValuesJSON, "$GROUP_ID",
+			String.valueOf(group.getGroupId()));
+
+		replacedValues = StringUtil.replace(
+			replacedValues, "$LAYOUT_ID",
+			String.valueOf(contentLayout.getLayoutId()));
+		replacedValues = StringUtil.replace(
+			replacedValues, "$LAYOUT_UUID",
+			String.valueOf(contentLayout.getUuid()));
+		replacedValues = StringUtil.replace(
+			replacedValues, "$TITLE", contentLayout.getName("en_US"));
+
+		fragmentEntryLink.setEditableValues(replacedValues);
+
+		fragmentEntryLink.setSegmentsExperienceId(
+			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
+				masterPageTemplateLayout.getPlid()));
+
+		fragmentEntryLink.setGroupId(group.getGroupId());
+
+		_fragmentEntryLinkLocalService.updateFragmentEntryLink(
+			fragmentEntryLink);
+
+		long[] layoutIds = {contentLayout.getLayoutId()};
+
+		exportImportLayouts(layoutIds, getImportParameterMap());
+
+		Layout importedLayout =
+			LayoutLocalServiceUtil.fetchLayoutByUuidAndGroupId(
+				contentLayout.getUuid(), importedGroup.getGroupId(), false);
+
+		Layout importedMasterPageTemplateLayout =
+			LayoutLocalServiceUtil.fetchLayoutByUuidAndGroupId(
+				masterPageTemplateLayout.getUuid(), importedGroup.getGroupId(),
+				true);
+
+		Layout importedDraftLayout = importedLayout.fetchDraftLayout();
+		Layout importedDraftLayoutOfMasterPageTemplate =
+			importedMasterPageTemplateLayout.fetchDraftLayout();
+
+		Assert.assertTrue(importedDraftLayout.isDraftLayout());
+		Assert.assertEquals(
+			importedLayout.getName(), importedDraftLayout.getName());
+
+		Assert.assertTrue(
+			importedDraftLayoutOfMasterPageTemplate.isDraftLayout());
+		Assert.assertEquals(
+			importedMasterPageTemplateLayout.getName(),
+			importedDraftLayoutOfMasterPageTemplate.getName());
 	}
 
 	@Test
@@ -530,7 +629,30 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 		}
 	}
 
+	private String _getContent(String fileName) throws Exception {
+		Class<?> clazz = getClass();
+
+		InputStream inputStream = clazz.getResourceAsStream(
+			"dependencies/" + fileName);
+
+		Scanner scanner = new Scanner(inputStream);
+
+		scanner.useDelimiter("\\Z");
+
+		return scanner.next();
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		LayoutExportImportTest.class);
+
+	@Inject
+	private FragmentEntryLinkLocalService _fragmentEntryLinkLocalService;
+
+	@Inject
+	private LayoutPageTemplateEntryLocalService
+		_layoutPageTemplateEntryLocalService;
+
+	@Inject
+	private SegmentsExperienceLocalService _segmentsExperienceLocalService;
 
 }
