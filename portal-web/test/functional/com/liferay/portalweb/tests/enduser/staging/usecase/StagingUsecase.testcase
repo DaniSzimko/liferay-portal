@@ -2307,7 +2307,7 @@ definition {
 				category = "Publishing",
 				portlet = "Staging");
 
-			LexiconEntry.gotoEntryMenuItem(
+			Staging.openThreeDotsMenuItem(
 				menuItem = "Summary",
 				rowEntry = "Publication Name");
 

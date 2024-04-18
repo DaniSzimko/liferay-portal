@@ -937,6 +937,30 @@ definition {
 	}
 
 	@summary = "Default summary"
+	macro openThreeDotsMenuItem(rowEntry = null, menuItem = null) {
+		var browserType = PropsUtil.get("browser.type");
+
+		if (${browserType} == "safari") {
+			Click(
+				key_rowEntry = ${rowEntry},
+				locator1 = "Icon#ROW_VERTICAL_ELLIPSIS_SAFARI");
+		}
+		else {
+			Click(
+				key_rowEntry = ${rowEntry},
+				locator1 = "Icon#ROW_VERTICAL_ELLIPSIS");
+		}
+
+		WaitForElementPresent(
+			key_text = "Summary",
+			locator1 = "MenuItem#ANY_MENU_ITEM");
+
+		Click(
+			key_menuItem = ${menuItem},
+			locator1 = "MenuItem#ANY_MENU_ITEM");
+	}
+
+	@summary = "Default summary"
 	macro publishCustomPublication(scheduleProcess = null, inProcess = null, checkContentNameList = null, validateErrorMessage = null, rangeAll = null, editPublishTemplateName = null, publishTemplateName = null, failureExpected = null, remoteStaging = null, headerTitle = null) {
 		Staging.addCustomPublication(
 			headerTitle = ${headerTitle},
