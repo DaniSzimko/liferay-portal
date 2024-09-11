@@ -8,6 +8,8 @@ export const PORTLET_URLS = {
 		'/~/control_panel/manage?p_p_id=com_liferay_asset_list_web_portlet_AssetListPortlet',
 	contentDashboard:
 		'/~/control_panel/manage?p_p_id=com_liferay_content_dashboard_web_portlet_ContentDashboardAdminPortlet',
+	depotAdmin:
+		'/~/control_panel/manage?p_p_id=com_liferay_depot_web_portlet_DepotAdminPortlet',
 	displayPageTemplates:
 		'/~/control_panel/manage?p_p_id=com_liferay_layout_page_template_admin_web_portlet_LayoutPageTemplatesPortlet&_com_liferay_layout_page_template_admin_web_portlet_LayoutPageTemplatesPortlet_tabs1=display-page-templates',
 	documentLibrary:
