@@ -1420,12 +1420,7 @@ test.describe('Form Localization', () => {
 		pageManagementSite,
 	}) => {
 
-		// Create a page with a Form fragment and a Localization Select fragment
-
-		const fragmentDefinition = getFragmentDefinition({
-			id: getRandomString(),
-			key: 'localization-select',
-		});
+		// Create a page with a Form fragment
 
 		const formId = getRandomString();
 
@@ -1434,10 +1429,7 @@ test.describe('Form Localization', () => {
 		});
 
 		const layout = await apiHelpers.headlessDelivery.createSitePage({
-			pageDefinition: getPageDefinition([
-				fragmentDefinition,
-				formDefinition,
-			]),
+			pageDefinition: getPageDefinition([formDefinition]),
 			siteId: pageManagementSite.id,
 			title: getRandomString(),
 		});
@@ -1447,6 +1439,17 @@ test.describe('Form Localization', () => {
 		// Map the form to the All Fields object and publish the page
 
 		await pageEditorPage.mapFormFragment(formId, 'All Fields');
+
+		// Add a Localization Select from the modal
+
+		await page
+			.getByRole('dialog')
+			.getByRole('button', {name: 'Add Localization Select'})
+			.click();
+
+		await expect(
+			page.locator('[data-name="Localization Select"]')
+		).toBeAttached();
 
 		await pageEditorPage.publishPage();
 
@@ -1476,7 +1479,7 @@ test.describe('Form Localization', () => {
 		await translationSelector.click();
 
 		const option = page.getByRole('option', {
-			name: 'español (España) Language',
+			name: 'Spanish (Spain) Language',
 		});
 
 		await expect(option).toContainText(/Not Translated/);
@@ -1556,6 +1559,50 @@ test.describe('Form Localization', () => {
 				.getByText('rich text español')
 		).toBeVisible();
 		await expect(page.getByText('text español')).toBeVisible();
+	});
+
+	test('Shows a warning modal when the page is published and there is a Localization Select fragment but no localizable fields', async ({
+		apiHelpers,
+		page,
+		pageEditorPage,
+		pageManagementSite,
+	}) => {
+
+		// Create a page with a Form fragment and Localication Select
+
+		const formId = getRandomString();
+
+		const formDefinition = getFormContainerDefinition({
+			id: formId,
+		});
+
+		const localizationSelectDefinition = getFragmentDefinition({
+			id: getRandomString(),
+			key: 'localization-select',
+		});
+
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				localizationSelectDefinition,
+				formDefinition,
+			]),
+			siteId: pageManagementSite.id,
+			title: getRandomString(),
+		});
+
+		await pageEditorPage.goto(layout, pageManagementSite.friendlyUrlPath);
+
+		// Map the form to the All Fields, only the Boolean field
+
+		await pageEditorPage.mapFormFragment(formId, 'All Fields', ['Boolean']);
+
+		// Publish and check the warning modal
+
+		await pageEditorPage.publishButton.click();
+
+		await expect(
+			page.getByText('Localizable Fields Hidden or Missing')
+		).toBeVisible();
 	});
 });
 
@@ -2695,6 +2742,120 @@ test.describe('Picklist input field', () => {
 			await page.getByText('carton').click();
 
 			await expect(page.getByLabel('Material')).toHaveValue('Carton');
+		}
+	);
+
+	test(
+		'The page designer map the Select from List fragment to objects fields on content pages',
+		{
+			tag: ['@LPS-151159', '@LPS-182728'],
+		},
+		async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
+
+			// Create a page with a Form fragment
+
+			const objectDefinitionApiClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {className: objectDefinitionClassName} = (
+				await objectDefinitionApiClient.getObjectDefinitionByExternalReferenceCode(
+					getObjectERC('Lemon Basket')
+				)
+			).body;
+
+			const picklistId = getRandomString();
+
+			const picklistDefinition = getFragmentDefinition({
+				fragmentConfig: {
+					inputFieldId: 'ObjectField_material',
+				},
+				id: picklistId,
+				key: 'INPUTS-select-from-list',
+			});
+
+			const multiselectPicklistDefinition = getFragmentDefinition({
+				fragmentConfig: {
+					inputFieldId: 'ObjectField_lemonDimensions',
+				},
+				id: getRandomString(),
+				key: 'INPUTS-select-from-list',
+			});
+
+			const submitFragmentDefinition = getFragmentDefinition({
+				id: getRandomString(),
+				key: 'INPUTS-submit-button',
+			});
+
+			const formDefinition = getFormContainerDefinition({
+				id: getRandomString(),
+				objectDefinitionClassName,
+				pageElements: [
+					picklistDefinition,
+					multiselectPicklistDefinition,
+					submitFragmentDefinition,
+				],
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: pageManagementSite.id,
+				title: getRandomString(),
+			});
+
+			// Go to edit mode and map it to the object
+
+			await pageEditorPage.goto(
+				layout,
+				pageManagementSite.friendlyUrlPath
+			);
+
+			// Change label and help text
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Label',
+				fragmentId: picklistId,
+				tab: 'General',
+				value: 'Select your material',
+			});
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Help Text',
+				fragmentId: picklistId,
+				tab: 'General',
+				value: 'Just one material can be selected',
+			});
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Show Help Text',
+				fragmentId: picklistId,
+				tab: 'General',
+				value: true,
+			});
+
+			// Mark field as required
+
+			await pageEditorPage.changeFragmentConfiguration({
+				fieldLabel: 'Mark as Required',
+				fragmentId: picklistId,
+				tab: 'General',
+				value: true,
+			});
+
+			// Publish and go to view mode
+
+			await pageEditorPage.publishPage();
+
+			await page.goto(
+				`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			// Assert help text and label
+
+			await expect(page.getByText('Select your material')).toBeVisible();
+
+			await expect(
+				page.getByText('Just one material can be selected')
+			).toBeVisible();
 		}
 	);
 });

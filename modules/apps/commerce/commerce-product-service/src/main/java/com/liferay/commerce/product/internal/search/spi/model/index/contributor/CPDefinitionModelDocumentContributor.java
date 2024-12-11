@@ -27,6 +27,8 @@ import com.liferay.commerce.product.model.CPSpecificationOption;
 import com.liferay.commerce.product.model.CProduct;
 import com.liferay.commerce.product.model.CommerceCatalog;
 import com.liferay.commerce.product.model.CommerceChannel;
+import com.liferay.commerce.product.service.CPConfigurationEntryLocalService;
+import com.liferay.commerce.product.service.CPConfigurationListLocalService;
 import com.liferay.commerce.product.service.CPDefinitionLinkLocalService;
 import com.liferay.commerce.product.service.CPDefinitionLocalService;
 import com.liferay.commerce.product.service.CPInstanceLocalService;
@@ -110,10 +112,11 @@ public class CPDefinitionModelDocumentContributor
 				cpDefinition.isAccountGroupFilterEnabled());
 			document.addKeyword(
 				CPField.ASSET_CATEGORY_NAMES,
-				_toLowerCaseStringArray(
+				TransformUtil.unsafeTransform(
 					_assetCategoryLocalService.getCategoryNames(
 						CPDefinition.class.getName(),
-						cpDefinition.getCPDefinitionId())));
+						cpDefinition.getCPDefinitionId()),
+					String::toLowerCase, String.class));
 
 			BigDecimal basePrice = _getBasePrice(cpDefinition.getCPInstances());
 
@@ -137,6 +140,10 @@ public class CPDefinitionModelDocumentContributor
 
 						return commerceChannel.getGroupId();
 					}));
+
+			document.addKeyword(
+				CPField.CP_CONFIGURATION_LIST_IDS,
+				_getCPConfigurationListIds(cpDefinition.getCPDefinitionId()));
 
 			long cpAttachmentFileEntryId = 0;
 
@@ -586,6 +593,16 @@ public class CPDefinitionModelDocumentContributor
 		return lowestPrice;
 	}
 
+	private String[] _getCPConfigurationListIds(long cpDefinitionId) {
+		return TransformUtil.transformToArray(
+			_cpConfigurationEntryLocalService.getCPConfigurationEntries(
+				_classNameLocalService.getClassNameId(CPDefinition.class),
+				cpDefinitionId, true),
+			cpConfigurationEntry -> String.valueOf(
+				cpConfigurationEntry.getCPConfigurationListId()),
+			String.class);
+	}
+
 	private List<CPOption> _getCPOptions(
 			List<CPDefinitionOptionRel> cpDefinitionOptionRels)
 		throws Exception {
@@ -668,14 +685,6 @@ public class CPDefinitionModelDocumentContributor
 		return false;
 	}
 
-	private String[] _toLowerCaseStringArray(String[] categoryNames) {
-		for (int i = 0; i < categoryNames.length; i++) {
-			categoryNames[i] = categoryNames[i].toLowerCase();
-		}
-
-		return categoryNames;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		CPDefinitionModelDocumentContributor.class);
 
@@ -696,6 +705,12 @@ public class CPDefinitionModelDocumentContributor
 
 	@Reference
 	private CommercePriceEntryLocalService _commercePriceEntryLocalService;
+
+	@Reference
+	private CPConfigurationEntryLocalService _cpConfigurationEntryLocalService;
+
+	@Reference
+	private CPConfigurationListLocalService _cpConfigurationListLocalService;
 
 	@Reference
 	private CPDefinitionLinkLocalService _cpDefinitionLinkLocalService;

@@ -126,7 +126,8 @@ public class APIPropertyRelevantObjectEntryModelListenerTest
 			jsonObject.get("title"));
 
 		ObjectDefinition userSystemObjectDefinition =
-			_objectDefinitionLocalService.fetchSystemObjectDefinition("User");
+			_objectDefinitionLocalService.fetchSystemObjectDefinition(
+				TestPropsValues.getCompanyId(), "User");
 
 		ObjectRelationship objectRelationship =
 			ObjectRelationshipTestUtil.addObjectRelationship(

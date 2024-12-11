@@ -372,17 +372,28 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 				"Company ID " + companyId + " is the default company ID");
 		}
 
-		DBPartitionUtil.insertDBPartition(companyId);
+		SafeCloseable safeCloseable1 =
+			PortalInstances.setInsertionInProcessCompanyIdWithSafeCloseable(
+				companyId);
 
-		SafeCloseable safeCloseable =
+		try {
+			DBPartitionUtil.insertDBPartition(companyId);
+		}
+		catch (Throwable throwable) {
+			safeCloseable1.close();
+
+			throw throwable;
+		}
+
+		SafeCloseable safeCloseable2 =
 			CompanyThreadLocal.setCompanyIdWithSafeCloseable(companyId);
+
+		companyPersistence.clearCache();
+		_virtualHostPersistence.clearCache();
 
 		try {
 			return _transactionAwareInvoke(
 				() -> {
-					companyPersistence.clearCache();
-					_virtualHostPersistence.clearCache();
-
 					Company company = companyPersistence.findByPrimaryKey(
 						companyId);
 
@@ -434,7 +445,8 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 					});
 			}
 			finally {
-				safeCloseable.close();
+				safeCloseable1.close();
+				safeCloseable2.close();
 			}
 
 			throw new PortalException(throwable);
@@ -442,7 +454,8 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		finally {
 			TransactionCommitCallbackUtil.registerCallback(
 				() -> {
-					safeCloseable.close();
+					safeCloseable1.close();
+					safeCloseable2.close();
 
 					return null;
 				});
@@ -672,41 +685,33 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 		Company company = companyPersistence.findByPrimaryKey(companyId);
 
-		SafeCloseable safeCloseable1 =
-			CompanyThreadLocal.setCompanyIdWithSafeCloseable(companyId);
-
-		try (SafeCloseable safeCloseable2 =
+		try (SafeCloseable safeCloseable1 =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(companyId);
+			SafeCloseable safeCloseable2 =
 				PortalInstances.setCompanyInDeletionProcessWithSafeCloseable(
 					companyId)) {
 
 			preunregisterCompany(company);
 
-			_clearCompanyCache(companyId, true);
-			_clearVirtualHostCache(companyId);
-
 			TransactionCommitCallbackUtil.registerCallback(
 				() -> {
+					_clearCache(company.getCompanyId());
+
 					PortalInstances.removeCompany(company.getCompanyId());
 
 					unregisterCompany(company);
 
+					_synchronizePortalInstances();
+
 					return null;
 				});
+
+			_clearCacheCallback(companyId, true);
 
 			DBPartitionUtil.extractDBPartition(companyId);
 		}
 		catch (Throwable throwable) {
-			safeCloseable1.close();
-
 			throw new PortalException(throwable);
-		}
-		finally {
-			TransactionCommitCallbackUtil.registerCallback(
-				() -> {
-					safeCloseable1.close();
-
-					return null;
-				});
 		}
 
 		return company;
@@ -1433,7 +1438,8 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			throw new SystemException(exception);
 		}
 
-		_clearCompanyCache(companyId, false);
+		companyPersistence.clearCache(SetUtil.fromArray(companyId));
+		_clearCacheCallback(companyId, false);
 	}
 
 	/**
@@ -1487,7 +1493,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			throw new SystemException(exception);
 		}
 
-		_clearCompanyCache(companyId, false);
+		_clearCacheCallback(companyId, false);
 	}
 
 	protected void addAssetEntriesFacet(SearchContext searchContext) {
@@ -1545,11 +1551,10 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		preunregisterCompany(company);
 
 		if (DBPartition.isPartitionEnabled()) {
-			_clearCompanyCache(companyId, true);
-			_clearVirtualHostCache(companyId);
-
 			TransactionCommitCallbackUtil.registerCallback(
 				() -> {
+					_clearCache(companyId);
+
 					PortalInstances.removeCompany(company.getCompanyId());
 
 					unregisterCompany(company);
@@ -1558,6 +1563,8 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 					return null;
 				});
+
+			_clearCacheCallback(companyId, true);
 
 			DBPartitionUtil.removeDBPartition(companyId);
 
@@ -2390,44 +2397,46 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		return company;
 	}
 
-	private void _clearCompanyCache(long companyId, boolean removePortalCache) {
+	private void _clearCache(long companyId) {
 		Company company = companyPersistence.fetchByPrimaryKey(companyId);
 
 		if (company != null) {
-			TransactionCommitCallbackUtil.registerCallback(
-				() -> {
-					EntityCacheUtil.removeResult(
-						company.getClass(), company.getPrimaryKeyObj());
-
-					if (removePortalCache) {
-						PortalCacheHelperUtil.removePortalCaches(
-							PortalCacheManagerNames.MULTI_VM, companyId);
-					}
-
-					return null;
-				});
-
 			companyPersistence.clearCache(company);
-		}
-	}
 
-	private void _clearVirtualHostCache(long companyId) {
-		Company company = companyPersistence.fetchByPrimaryKey(companyId);
-
-		if (company != null) {
 			VirtualHost virtualHost = _virtualHostPersistence.fetchByHostname(
 				company.getVirtualHostname());
 
-			TransactionCommitCallbackUtil.registerCallback(
-				() -> {
-					EntityCacheUtil.removeResult(
-						virtualHost.getClass(), virtualHost.getPrimaryKeyObj());
-
-					return null;
-				});
-
 			_virtualHostPersistence.clearCache(virtualHost);
 		}
+	}
+
+	private void _clearCacheCallback(
+		long companyId, boolean removePortalCache) {
+
+		Company company = companyPersistence.fetchByPrimaryKey(companyId);
+
+		if (company == null) {
+			return;
+		}
+
+		VirtualHost virtualHost = _virtualHostPersistence.fetchByHostname(
+			company.getVirtualHostname());
+
+		TransactionCommitCallbackUtil.registerCallback(
+			() -> {
+				EntityCacheUtil.removeResult(
+					company.getClass(), company.getPrimaryKeyObj());
+
+				EntityCacheUtil.removeResult(
+					virtualHost.getClass(), virtualHost.getPrimaryKeyObj());
+
+				if (removePortalCache) {
+					PortalCacheHelperUtil.removePortalCaches(
+						PortalCacheManagerNames.MULTI_VM, companyId);
+				}
+
+				return null;
+			});
 	}
 
 	private void _deletePortalInstance(Company company) throws PortalException {

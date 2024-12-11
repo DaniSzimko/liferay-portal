@@ -12,14 +12,15 @@ import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.rest.test.util.ObjectEntryTestUtil;
-import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.test.util.ObjectDefinitionTestUtil;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.service.ResourceActionLocalServiceUtil;
 import com.liferay.portal.kernel.test.util.HTTPTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.Http;
@@ -27,8 +28,11 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.URLCodec;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LoggerTestUtil;
+import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.util.PropsValues;
+import com.liferay.portal.vulcan.jackson.databind.ObjectMapperProviderUtil;
+import com.liferay.portal.vulcan.permission.PermissionUtil;
 
 import java.util.Collections;
 import java.util.zip.ZipInputStream;
@@ -121,17 +125,6 @@ public class ExportTaskResourceTest extends BaseTaskResourceTestCase {
 
 		Assert.assertEquals(2, jsonObject.getInt("processedItemsCount"));
 
-		ZipInputStream zipInputStream = new ZipInputStream(
-			HTTPTestUtil.invokeToInputStream(
-				null,
-				StringBundler.concat(
-					"headless-batch-engine/v1.0/export-task",
-					"/by-external-reference-code/",
-					jsonObject.getString("externalReferenceCode"), "/content"),
-				Http.Method.GET));
-
-		zipInputStream.getNextEntry();
-
 		JSONAssert.assertEquals(
 			JSONUtil.putAll(
 				JSONUtil.put(
@@ -141,7 +134,73 @@ public class ExportTaskResourceTest extends BaseTaskResourceTestCase {
 					"externalReferenceCode",
 					objectEntry2.getExternalReferenceCode())
 			).toString(),
-			StringUtil.read(zipInputStream), JSONCompareMode.LENIENT);
+			_getExportTaskContentJSONArray(
+				jsonObject.getString("externalReferenceCode")
+			).toString(),
+			JSONCompareMode.LENIENT);
+	}
+
+	@FeatureFlags("LPD-29367")
+	@Test
+	public void testPostExportTaskWithNestedFieldNames() throws Exception {
+
+		// With "nestedFieldNames" query parameter
+
+		ObjectEntry objectEntry = ObjectEntryTestUtil.addObjectEntry(
+			objectDefinition, OBJECT_FIELD_NAME_TEXT, "TestObject");
+
+		JSONObject jsonObject = _testPostExportTask(
+			"COMPLETED", "nestedFieldNames=permissions", objectDefinition);
+
+		Assert.assertEquals(1, jsonObject.getInt("processedItemsCount"));
+
+		JSONArray permissionsJSONArray = JSONUtil.getValueAsJSONArray(
+			_getExportTaskContentJSONArray(
+				jsonObject.getString("externalReferenceCode")),
+			"JSONObject/0", "JSONArray/permissions");
+
+		JSONAssert.assertEquals(
+			ObjectMapperProviderUtil.getObjectMapper(
+			).writeValueAsString(
+				PermissionUtil.getPermissions(
+					objectDefinition.getCompanyId(),
+					ResourceActionLocalServiceUtil.getResourceActions(
+						objectDefinition.getClassName()),
+					objectEntry.getObjectEntryId(),
+					objectDefinition.getClassName(), null)
+			),
+			permissionsJSONArray.toString(), JSONCompareMode.LENIENT);
+
+		// Without "nestedFieldNames" query parameter
+
+		jsonObject = _testPostExportTask("COMPLETED", null, objectDefinition);
+
+		Assert.assertEquals(1, jsonObject.getInt("processedItemsCount"));
+		Assert.assertNull(
+			JSONUtil.getValueAsJSONArray(
+				_getExportTaskContentJSONArray(
+					jsonObject.getString("externalReferenceCode")),
+				"JSONObject/0", "JSONArray/permissions"));
+	}
+
+	private JSONArray _getExportTaskContentJSONArray(
+			String externalReferenceCode)
+		throws Exception {
+
+		try (ZipInputStream zipInputStream = new ZipInputStream(
+				HTTPTestUtil.invokeToInputStream(
+					null,
+					StringBundler.concat(
+						"headless-batch-engine/v1.0/export-task",
+						"/by-external-reference-code/", externalReferenceCode,
+						"/content"),
+					Http.Method.GET))) {
+
+			zipInputStream.getNextEntry();
+
+			return JSONFactoryUtil.createJSONArray(
+				StringUtil.read(zipInputStream));
+		}
 	}
 
 	private JSONObject _testPostExportTask(
@@ -171,11 +230,5 @@ public class ExportTaskResourceTest extends BaseTaskResourceTestCase {
 
 	@Inject
 	private CompanyLocalService _companyLocalService;
-
-	@Inject
-	private JSONFactory _jsonFactory;
-
-	@Inject
-	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
 }

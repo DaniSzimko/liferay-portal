@@ -10,17 +10,27 @@ import com.liferay.commerce.model.CPDefinitionInventory;
 import com.liferay.commerce.model.CommerceAvailabilityEstimate;
 import com.liferay.commerce.product.model.CPConfigurationEntry;
 import com.liferay.commerce.product.model.CPDefinition;
+import com.liferay.commerce.product.model.CPTaxCategory;
 import com.liferay.commerce.product.model.CProduct;
 import com.liferay.commerce.product.service.CPConfigurationEntryService;
 import com.liferay.commerce.product.service.CPDefinitionService;
 import com.liferay.commerce.service.CPDAvailabilityEstimateService;
 import com.liferay.commerce.service.CPDefinitionInventoryService;
 import com.liferay.headless.commerce.admin.catalog.dto.v1_0.ProductConfiguration;
+import com.liferay.headless.commerce.admin.catalog.dto.v1_0.ProductShippingConfiguration;
+import com.liferay.headless.commerce.admin.catalog.dto.v1_0.ProductTaxConfiguration;
 import com.liferay.headless.commerce.core.util.LanguageUtils;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.util.BigDecimalUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
+
+import java.math.BigDecimal;
+
+import java.util.Locale;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -81,6 +91,9 @@ public class ProductConfigurationDTOConverter
 			productConfiguration.setEntityExternalReferenceCode(
 				() -> _getEntityExternalReferenceCode(cpConfigurationEntry));
 			productConfiguration.setEntityId(cpConfigurationEntry::getClassPK);
+			productConfiguration.setEntityName(
+				() -> _getEntityName(
+					cpConfigurationEntry, dtoConverterContext.getLocale()));
 			productConfiguration.setExternalReferenceCode(
 				cpConfigurationEntry::getExternalReferenceCode);
 			productConfiguration.setId(
@@ -101,6 +114,54 @@ public class ProductConfigurationDTOConverter
 			productConfiguration.setMultipleOrderQuantity(
 				() -> BigDecimalUtil.stripTrailingZeros(
 					cpConfigurationEntry.getMultipleOrderQuantity()));
+			productConfiguration.setProductShippingConfiguration(
+				() -> {
+					ProductShippingConfiguration productShippingConfiguration =
+						new ProductShippingConfiguration();
+
+					productShippingConfiguration.setDepth(
+						() -> BigDecimal.valueOf(
+							cpConfigurationEntry.getDepth()));
+					productShippingConfiguration.setFreeShipping(
+						cpConfigurationEntry::isFreeShipping);
+					productShippingConfiguration.setHeight(
+						() -> BigDecimal.valueOf(
+							cpConfigurationEntry.getHeight()));
+					productShippingConfiguration.setShippable(
+						cpConfigurationEntry::isShippable);
+					productShippingConfiguration.setShippingExtraPrice(
+						() -> BigDecimal.valueOf(
+							cpConfigurationEntry.getShippingExtraPrice()));
+					productShippingConfiguration.setShippingSeparately(
+						cpConfigurationEntry::isShipSeparately);
+					productShippingConfiguration.setWeight(
+						() -> BigDecimal.valueOf(
+							cpConfigurationEntry.getWeight()));
+					productShippingConfiguration.setWidth(
+						() -> BigDecimal.valueOf(
+							cpConfigurationEntry.getWidth()));
+
+					return productShippingConfiguration;
+				});
+			productConfiguration.setProductTaxConfiguration(
+				() -> {
+					ProductTaxConfiguration productTaxConfiguration =
+						new ProductTaxConfiguration();
+
+					productTaxConfiguration.setId(
+						cpConfigurationEntry::getCPTaxCategoryId);
+					productTaxConfiguration.setTaxable(
+						() -> !cpConfigurationEntry.isTaxExempt());
+					productTaxConfiguration.setTaxCategory(
+						() -> _getTaxCategory(
+							cpConfigurationEntry.getCPTaxCategory(),
+							dtoConverterContext.getLocale()));
+
+					return productTaxConfiguration;
+				});
+			productConfiguration.setPurchasable(
+				cpConfigurationEntry::getPurchasable);
+			productConfiguration.setVisible(cpConfigurationEntry::getVisible);
 		}
 		else {
 			CPDAvailabilityEstimate cpdAvailabilityEstimate =
@@ -168,12 +229,44 @@ public class ProductConfigurationDTOConverter
 			CPConfigurationEntry cpConfigurationEntry)
 		throws Exception {
 
+		if (!StringUtil.equals(
+				CPDefinition.class.getName(),
+				cpConfigurationEntry.getClassName())) {
+
+			return null;
+		}
+
 		CPDefinition cpDefinition = _cpDefinitionService.getCPDefinition(
 			cpConfigurationEntry.getClassPK());
 
 		CProduct cProduct = cpDefinition.getCProduct();
 
 		return cProduct.getExternalReferenceCode();
+	}
+
+	private String _getEntityName(
+			CPConfigurationEntry cpConfigurationEntry, Locale locale)
+		throws PortalException {
+
+		if (!StringUtil.equals(
+				CPDefinition.class.getName(),
+				cpConfigurationEntry.getClassName())) {
+
+			return null;
+		}
+
+		CPDefinition cpDefinition = _cpDefinitionService.getCPDefinition(
+			cpConfigurationEntry.getClassPK());
+
+		return cpDefinition.getName(LocaleUtil.toLanguageId(locale));
+	}
+
+	private String _getTaxCategory(CPTaxCategory cpTaxCategory, Locale locale) {
+		if (cpTaxCategory == null) {
+			return null;
+		}
+
+		return cpTaxCategory.getName(locale);
 	}
 
 	@Reference

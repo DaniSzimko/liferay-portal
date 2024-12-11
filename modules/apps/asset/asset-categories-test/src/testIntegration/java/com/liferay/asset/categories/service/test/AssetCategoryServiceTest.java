@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
@@ -25,6 +26,7 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
@@ -68,6 +70,22 @@ public class AssetCategoryServiceTest {
 			TestPropsValues.getUserId(), _group.getGroupId(),
 			RandomTestUtil.randomString(),
 			ServiceContextTestUtil.getServiceContext());
+	}
+
+	@Test
+	public void testAddCategory() throws Exception {
+		AssetCategory assetCategory = _assetCategoryLocalService.addCategory(
+			TestPropsValues.getUserId(), _group.getGroupId(),
+			RandomTestUtil.randomString(), _assetVocabulary.getVocabularyId(),
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+
+		_testAddCategory(
+			String.valueOf(assetCategory.getPrimaryKey()), RoleConstants.GUEST);
+		_testAddCategory(
+			String.valueOf(assetCategory.getPrimaryKey()), RoleConstants.OWNER);
+		_testAddCategory(
+			String.valueOf(assetCategory.getPrimaryKey()),
+			RoleConstants.SITE_MEMBER);
 	}
 
 	@Test
@@ -128,6 +146,19 @@ public class AssetCategoryServiceTest {
 		}
 	}
 
+	private void _testAddCategory(String primKey, String roleName)
+		throws Exception {
+
+		Role role = _roleLocalService.getRole(_group.getCompanyId(), roleName);
+
+		ResourcePermission resourcePermission =
+			_resourcePermissionLocalService.getResourcePermission(
+				_group.getCompanyId(), AssetCategory.class.getName(),
+				ResourceConstants.SCOPE_INDIVIDUAL, primKey, role.getRoleId());
+
+		Assert.assertTrue(resourcePermission.hasActionId(ActionKeys.VIEW));
+	}
+
 	@Inject
 	private AssetCategoryLocalService _assetCategoryLocalService;
 
@@ -144,6 +175,9 @@ public class AssetCategoryServiceTest {
 
 	@Inject
 	private PermissionCheckerFactory _permissionCheckerFactory;
+
+	@Inject
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
 
 	@Inject
 	private RoleLocalService _roleLocalService;

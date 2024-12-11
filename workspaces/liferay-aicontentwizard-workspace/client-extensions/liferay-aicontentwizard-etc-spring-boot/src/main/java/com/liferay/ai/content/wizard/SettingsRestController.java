@@ -5,8 +5,13 @@
 
 package com.liferay.ai.content.wizard;
 
+import com.liferay.ai.content.wizard.model.Settings;
+import com.liferay.ai.content.wizard.service.SettingsService;
 import com.liferay.client.extension.util.spring.boot.BaseRestController;
-import com.liferay.client.extension.util.spring.boot.LiferayOAuth2AccessTokenManager;
+import com.liferay.petra.string.StringBundler;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -14,6 +19,8 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,68 +37,128 @@ import org.springframework.web.bind.annotation.RestController;
 public class SettingsRestController extends BaseRestController {
 
 	@DeleteMapping("/{id}")
-	public void delete(@PathVariable("id") String id) {
+	public void delete(
+		@AuthenticationPrincipal Jwt jwt, @PathVariable("id") String id) {
+
 		delete(
-			_getAuthorization(), "", "/o/c/k9l6aicontentwizardsettings/" + id);
+			"Bearer " + jwt.getTokenValue(), "",
+			"/o/c/k9l6aicontentwizardsettings/" + id);
 	}
 
 	@GetMapping
-	public ResponseEntity<String> get() {
-		return new ResponseEntity<>(_get(), HttpStatus.OK);
+	public ResponseEntity<String> get(@AuthenticationPrincipal Jwt jwt) {
+		return new ResponseEntity<>(_get(jwt, null), HttpStatus.OK);
+	}
+
+	@GetMapping("/{id}")
+	public ResponseEntity<String> getSettings(
+		@AuthenticationPrincipal Jwt jwt, @PathVariable("id") String id) {
+
+		return new ResponseEntity<>(_get(jwt, id), HttpStatus.OK);
 	}
 
 	@GetMapping("/status")
-	public ResponseEntity<String> getStatus() {
-		JSONObject jsonObject = new JSONObject(_get());
+	public ResponseEntity<String> getStatus(@AuthenticationPrincipal Jwt jwt) {
+		JSONObject jsonObject = new JSONObject();
 
-		JSONArray itemsJSONArray = jsonObject.getJSONArray("items");
+		Settings settings = _settingsService.getActiveSettings(jwt);
 
-		for (int i = 0; i < itemsJSONArray.length(); i++) {
-			JSONObject itemJSONObject = itemsJSONArray.getJSONObject(i);
+		if (settings != null) {
+			jsonObject.put(
+				"active", true
+			).put(
+				"provider", settings.providerName
+			);
+		}
+		else {
+			jsonObject.put("active", false);
+		}
 
-			if (itemJSONObject.getBoolean("active")) {
-				return new ResponseEntity<>(
-					new JSONObject(
-					).put(
-						"active", true
-					).put(
-						"provider",
-						itemJSONObject.getJSONObject(
+		return new ResponseEntity<>(jsonObject.toString(), HttpStatus.OK);
+	}
+
+	@PostMapping
+	public ResponseEntity<String> post(
+		@AuthenticationPrincipal Jwt jwt, @RequestBody String json) {
+
+		JSONObject jsonObject = new JSONObject(json);
+
+		JSONObject settingsJSONObject = null;
+
+		if (jsonObject.has("id")) {
+			settingsJSONObject = new JSONObject(
+				patch(
+					"Bearer " + jwt.getTokenValue(), json,
+					"/o/c/k9l6aicontentwizardsettings/" +
+						jsonObject.getLong("id")));
+		}
+		else {
+			settingsJSONObject = new JSONObject(
+				post(
+					"Bearer " + jwt.getTokenValue(), json,
+					"/o/c/k9l6aicontentwizardsettings"));
+		}
+
+		if (!jsonObject.getBoolean("active")) {
+			return new ResponseEntity<>(
+				settingsJSONObject.toString(), HttpStatus.OK);
+		}
+
+		_settingsService.setActiveSettings(settingsJSONObject);
+
+		JSONArray jsonArray = new JSONObject(
+			get(
+				"Bearer " + jwt.getTokenValue(),
+				StringBundler.concat(
+					"/o/c/k9l6aicontentwizardsettings?filter=active eq true ",
+					"and id ne '", settingsJSONObject.getLong("id"), "'"))
+		).getJSONArray(
+			"items"
+		);
+
+		for (int i = 0; i < jsonArray.length(); i++) {
+			JSONObject itemJSONObject = jsonArray.getJSONObject(i);
+
+			patch(
+				"Bearer " + jwt.getTokenValue(),
+				new JSONObject(
+				).put(
+					"active", false
+				).toString(),
+				"/o/c/k9l6aicontentwizardsettings/" +
+					itemJSONObject.getInt("id"));
+
+			if (_log.isInfoEnabled()) {
+				_log.info(
+					StringBundler.concat(
+						"Deactivated ", itemJSONObject.getInt("id"),
+						" with provider ",
+						settingsJSONObject.getJSONObject(
 							"provider"
 						).getString(
-							"key"
-						)
-					).toString(),
-					HttpStatus.OK);
+							"name"
+						)));
 			}
 		}
 
 		return new ResponseEntity<>(
-			new JSONObject(
-			).put(
-				"active", false
-			).toString(),
-			HttpStatus.OK);
+			settingsJSONObject.toString(), HttpStatus.OK);
 	}
 
-	@PostMapping
-	public ResponseEntity<String> post(@RequestBody String json) {
-		return new ResponseEntity<>(
-			post(_getAuthorization(), json, "/o/c/k9l6aicontentwizardsettings"),
-			HttpStatus.OK);
+	private String _get(Jwt jwt, String id) {
+		String url = "/o/c/k9l6aicontentwizardsettings/";
+
+		if (id != null) {
+			url += id;
+		}
+
+		return get("Bearer " + jwt.getTokenValue(), url);
 	}
 
-	private String _get() {
-		return get(_getAuthorization(), "/o/c/k9l6aicontentwizardsettings");
-	}
-
-	private String _getAuthorization() {
-		return _liferayOAuth2AccessTokenManager.getAuthorization(
-			"liferay-aicontentwizard-etc-spring-boot-oauth-application-" +
-				"headless-server");
-	}
+	private static final Log _log = LogFactory.getLog(
+		SettingsRestController.class);
 
 	@Autowired
-	private LiferayOAuth2AccessTokenManager _liferayOAuth2AccessTokenManager;
+	private SettingsService _settingsService;
 
 }

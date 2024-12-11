@@ -13,9 +13,13 @@ import {SelectField} from '../../../../../../app/components/fragment_configurati
 import {FORM_MAPPING_SOURCES} from '../../../../../../app/config/constants/formMappingSources';
 import {LAYOUT_TYPES} from '../../../../../../app/config/constants/layoutTypes';
 import {config} from '../../../../../../app/config/index';
-import {useSelector} from '../../../../../../app/contexts/StoreContext';
+import {
+	useDispatch,
+	useSelector,
+} from '../../../../../../app/contexts/StoreContext';
 import selectSegmentsExperienceId from '../../../../../../app/selectors/selectSegmentsExperienceId';
 import {formIsMapped} from '../../../../../../app/utils/formIsMapped';
+import {openAddLocalizationSelect} from '../../../../../../app/utils/openAddLocalizationSelect';
 import {openInfoFieldSelector} from '../../../../../../common/openInfoFieldSelector';
 
 export default function FormMappingOptions({
@@ -24,6 +28,8 @@ export default function FormMappingOptions({
 	onValueSelect,
 }) {
 	const segmentsExperienceId = useSelector(selectSegmentsExperienceId);
+
+	const dispatch = useDispatch();
 
 	const formTypes = useMemo(() => getTypes(), []);
 
@@ -63,7 +69,18 @@ export default function FormMappingOptions({
 					formItemId: item.itemId,
 					itemType: type.className,
 					onCancel: resetMapping,
-					onSave: saveMapping,
+					onSave: (fields) => {
+						saveMapping(fields);
+
+						if (Liferay.FeatureFlags['LPD-37927']) {
+							if (fields.some((field) => field.localizable)) {
+								openAddLocalizationSelect({
+									dispatch,
+									formId: item.itemId,
+								});
+							}
+						}
+					},
 					segmentsExperienceId,
 				});
 			}
@@ -73,6 +90,7 @@ export default function FormMappingOptions({
 		},
 		[
 			formTypes,
+			dispatch,
 			item,
 			onValueSelect,
 			setClassNameId,

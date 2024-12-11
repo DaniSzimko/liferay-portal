@@ -558,6 +558,7 @@
 			"properties": {
 				"modificationDeletionConflictCheckEnabled": {
 					"default": false,
+					"description": "Check this option to automatically check all modification deletion conflicts by default. This will let you review any deletion conflicts and prevent Liferay from overwriting deletions made in a publication when updating production.",
 					"title": "Modification Deletion Conflict Check Enabled",
 					"type": "boolean"
 				},

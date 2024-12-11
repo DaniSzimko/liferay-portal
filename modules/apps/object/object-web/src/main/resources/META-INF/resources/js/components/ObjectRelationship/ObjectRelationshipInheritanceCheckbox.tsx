@@ -32,8 +32,7 @@ export function ObjectRelationshipInheritanceCheckbox({
 				/>
 
 				<ClayPopover
-					alignPosition="top-left"
-					closeOnClickOutside
+					alignPosition="top"
 					disableScroll
 					header={Liferay.Language.get('inheritance')}
 					onShowChange={setShowPopover}
@@ -41,6 +40,10 @@ export function ObjectRelationshipInheritanceCheckbox({
 					trigger={
 						<ClayIcon
 							className="field-base-tooltip-icon"
+							onBlur={() => setShowPopover(false)}
+							onFocus={() => setShowPopover(true)}
+							onMouseLeave={() => setShowPopover(false)}
+							onMouseOver={() => setShowPopover(true)}
 							symbol="question-circle-full"
 						/>
 					}

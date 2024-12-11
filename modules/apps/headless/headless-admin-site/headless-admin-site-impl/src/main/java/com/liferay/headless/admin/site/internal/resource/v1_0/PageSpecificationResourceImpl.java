@@ -48,6 +48,7 @@ import com.liferay.portal.kernel.util.ColorSchemeFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -362,6 +363,84 @@ public class PageSpecificationResourceImpl
 			serviceContext);
 	}
 
+	@Override
+	protected void preparePatch(
+		PageSpecification pageSpecification,
+		PageSpecification existingPageSpecification) {
+
+		Settings settings = pageSpecification.getSettings();
+
+		if (settings != null) {
+			Settings existingSettings = existingPageSpecification.getSettings();
+
+			if (settings.getColorSchemeName() != null) {
+				existingSettings.setColorSchemeName(
+					settings::getColorSchemeName);
+			}
+
+			if (settings.getCss() != null) {
+				existingSettings.setCss(settings::getCss);
+			}
+
+			if (settings.getFavIcon() != null) {
+				existingSettings.setFavIcon(settings::getFavIcon);
+			}
+
+			if (settings.getGlobalCSSClientExtensions() != null) {
+				existingSettings.setGlobalCSSClientExtensions(
+					settings::getGlobalCSSClientExtensions);
+			}
+
+			if (settings.getGlobalJSClientExtensions() != null) {
+				existingSettings.setGlobalJSClientExtensions(
+					settings::getGlobalJSClientExtensions);
+			}
+
+			if (settings.getJavascript() != null) {
+				existingSettings.setJavascript(settings::getJavascript);
+			}
+
+			if (settings.getMasterPageItemExternalReference() != null) {
+				existingSettings.setMasterPageItemExternalReference(
+					settings::getMasterPageItemExternalReference);
+			}
+
+			if (settings.getStyleBookItemExternalReference() != null) {
+				existingSettings.setStyleBookItemExternalReference(
+					settings::getStyleBookItemExternalReference);
+			}
+
+			if (settings.getThemeCSSClientExtension() != null) {
+				existingSettings.setThemeCSSClientExtension(
+					settings::getThemeCSSClientExtension);
+			}
+
+			if (settings.getThemeName() != null) {
+				existingSettings.setThemeName(settings::getThemeName);
+			}
+
+			if (settings.getThemeSettings() != null) {
+				existingSettings.setThemeSettings(settings::getThemeSettings);
+			}
+
+			if (settings.getThemeSpritemapClientExtension() != null) {
+				existingSettings.setThemeSpritemapClientExtension(
+					settings::getThemeSpritemapClientExtension);
+			}
+		}
+
+		if (!Objects.equals(
+				PageSpecification.Type.CONTENT_PAGE_SPECIFICATION,
+				existingPageSpecification.getType())) {
+
+			return;
+		}
+
+		_preparePatch(
+			(ContentPageSpecification)pageSpecification,
+			(ContentPageSpecification)existingPageSpecification);
+	}
+
 	private void _addChildPageElements(
 		LayoutStructure layoutStructure, PageElement pageElement) {
 
@@ -421,7 +500,7 @@ public class PageSpecificationResourceImpl
 	private long _getFaviconFileEntryId(Layout layout, Settings settings)
 		throws Exception {
 
-		if ((settings.getFavIcon() == null) ||
+		if ((settings == null) || (settings.getFavIcon() == null) ||
 			!(settings.getFavIcon() instanceof ItemExternalReference)) {
 
 			return 0;
@@ -429,6 +508,12 @@ public class PageSpecificationResourceImpl
 
 		ItemExternalReference itemExternalReference =
 			(ItemExternalReference)settings.getFavIcon();
+
+		if (Validator.isNull(
+				itemExternalReference.getExternalReferenceCode())) {
+
+			return 0;
+		}
 
 		long groupId = layout.getGroupId();
 
@@ -454,10 +539,17 @@ public class PageSpecificationResourceImpl
 	private long _getMasterLayoutPlid(Layout layout, Settings settings)
 		throws Exception {
 
+		if (settings == null) {
+			return 0;
+		}
+
 		ItemExternalReference itemExternalReference =
 			settings.getMasterPageItemExternalReference();
 
-		if (itemExternalReference == null) {
+		if ((itemExternalReference == null) ||
+			Validator.isNull(
+				itemExternalReference.getExternalReferenceCode())) {
+
 			return 0;
 		}
 
@@ -490,15 +582,42 @@ public class PageSpecificationResourceImpl
 		return layoutPageTemplateEntry.getPlid();
 	}
 
+	private PageExperience _getPageExperience(
+		ContentPageSpecification contentPageSpecification,
+		String pageExperienceExternalReferenceCode) {
+
+		for (PageExperience pageExperience :
+				contentPageSpecification.getPageExperiences()) {
+
+			if (!Objects.equals(
+					pageExperience.getExternalReferenceCode(),
+					pageExperienceExternalReferenceCode)) {
+
+				continue;
+			}
+
+			return pageExperience;
+		}
+
+		throw new UnsupportedOperationException();
+	}
+
 	private long _getStyleBookEntryId(Layout layout, Settings settings)
 		throws Exception {
 
-		if (settings.getStyleBookItemExternalReference() == null) {
+		if (settings == null) {
 			return 0;
 		}
 
 		ItemExternalReference itemExternalReference =
 			settings.getStyleBookItemExternalReference();
+
+		if ((itemExternalReference == null) ||
+			Validator.isNull(
+				itemExternalReference.getExternalReferenceCode())) {
+
+			return 0;
+		}
 
 		StyleBookEntry styleBookEntry =
 			_styleBookEntryService.getStyleBookEntryByExternalReferenceCode(
@@ -538,6 +657,26 @@ public class PageSpecificationResourceImpl
 
 		return GetterUtil.getBoolean(
 			draftLayout.getTypeSettingsProperty("published"));
+	}
+
+	private void _preparePatch(
+		ContentPageSpecification contentPageSpecification,
+		ContentPageSpecification existingContentPageSpecification) {
+
+		if (contentPageSpecification.getPageExperiences() == null) {
+			return;
+		}
+
+		for (PageExperience pageExperience :
+				contentPageSpecification.getPageExperiences()) {
+
+			PageExperience existingPageExperience = _getPageExperience(
+				existingContentPageSpecification,
+				pageExperience.getExternalReferenceCode());
+
+			existingPageExperience.setPageElements(
+				pageExperience::getPageElements);
+		}
 	}
 
 	private List<PageSpecification> _toPageSpecifications(Layout layout)
@@ -630,15 +769,13 @@ public class PageSpecificationResourceImpl
 
 		unicodeProperties.setProperty("javascript", settings.getJavascript());
 
-		if (settings.getThemeSettings() != null) {
-			for (String key :
-					ListUtil.fromCollection(unicodeProperties.keySet())) {
-
-				if (key.startsWith("lfr-theme:")) {
-					unicodeProperties.remove(key);
-				}
+		for (String key : ListUtil.fromCollection(unicodeProperties.keySet())) {
+			if (key.startsWith("lfr-theme:")) {
+				unicodeProperties.remove(key);
 			}
+		}
 
+		if (MapUtil.isNotEmpty(settings.getThemeSettings())) {
 			unicodeProperties.putAll(
 				(Map<String, ? extends String>)settings.getThemeSettings());
 		}

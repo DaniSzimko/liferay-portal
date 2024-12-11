@@ -143,7 +143,7 @@ public class CPConfigurationListDisplayContext {
 	}
 
 	public CPConfigurationList getCPConfigurationList() throws PortalException {
-		long cpConfigurationListId = getCPConfigurationEntryId();
+		long cpConfigurationListId = getCPConfigurationListId();
 
 		if (cpConfigurationListId == 0) {
 			return null;
@@ -191,7 +191,9 @@ public class CPConfigurationListDisplayContext {
 		return CreationMenuBuilder.addPrimaryDropdownItem(
 			dropdownItem -> {
 				dropdownItem.setHref("addCPConfigurationList");
-				dropdownItem.setLabel("add-new-product-configuration");
+				dropdownItem.setLabel(
+					LanguageUtil.get(
+						httpServletRequest, "add-new-product-configuration"));
 				dropdownItem.setTarget("event");
 			}
 		).build();

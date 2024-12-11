@@ -4976,6 +4976,10 @@ public class JenkinsResultsParserUtil {
 							"application/x-www-form-urlencoded");
 					}
 
+					if (url.startsWith("https://releases-cdn.liferay.com")) {
+						httpURLConnection.setRequestProperty("User-Agent", "");
+					}
+
 					if (postContent != null) {
 						if (httpRequestMethod == null) {
 							httpURLConnection.setRequestMethod("POST");

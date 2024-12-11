@@ -357,8 +357,6 @@ const MillerColumns = ({
 				rtl={rtl}
 			>
 				<DndProvider backend={HTML5Backend}>
-					<DragPreviewWrapper />
-
 					<div
 						className="bg-white miller-columns-row"
 						onKeyDown={onKeyDown}
@@ -385,6 +383,8 @@ const MillerColumns = ({
 								rtl={rtl}
 							/>
 						))}
+
+						<DragPreviewWrapper />
 					</div>
 				</DndProvider>
 			</KeyboardMovementProvider>
@@ -430,7 +430,13 @@ function DragPreviewWrapper() {
 		};
 	}, [target]);
 
-	return <DragPreview alignment={alignment} getLabel={getDragPreviewLabel} />;
+	return (
+		<DragPreview
+			alignment={alignment}
+			focusElement={!!sources.length}
+			getLabel={getDragPreviewLabel}
+		/>
+	);
 }
 
 export default MillerColumns;

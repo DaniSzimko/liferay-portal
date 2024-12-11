@@ -20,12 +20,16 @@ import {
 	useItemLocalConfig,
 	useUpdateItemLocalConfig,
 } from '../../../../../../app/contexts/LocalConfigContext';
-import {useSelector} from '../../../../../../app/contexts/StoreContext';
+import {
+	useSelector,
+	useSelectorRef,
+} from '../../../../../../app/contexts/StoreContext';
 import selectLanguageId from '../../../../../../app/selectors/selectLanguageId';
 import {formIsMapped} from '../../../../../../app/utils/formIsMapped';
 import {formIsRestricted} from '../../../../../../app/utils/formIsRestricted';
 import {formIsUnavailable} from '../../../../../../app/utils/formIsUnavailable';
 import {getEditableLocalizedValue} from '../../../../../../app/utils/getEditableLocalizedValue';
+import {hasLocalizableFields} from '../../../../../../app/utils/hasLocalizableFields';
 import {setIn} from '../../../../../../app/utils/setIn';
 import {useSaveFormConfig} from '../../../../../../app/utils/useSaveFormConfig';
 import CurrentLanguageFlag from '../../../../../../common/components/CurrentLanguageFlag';
@@ -473,6 +477,8 @@ const UNLOCALIZED_FIELDS_STATE_OPTIONS = [
 function LocalizationOptions({item, onValueSelect}) {
 	const languageId = useSelector(selectLanguageId);
 
+	const stateRef = useSelectorRef((state) => state);
+
 	const {localizationConfig = {}} = item.config;
 
 	const {unlocalizedFieldsMessage, unlocalizedFieldsState} =
@@ -486,7 +492,18 @@ function LocalizationOptions({item, onValueSelect}) {
 
 	const helpTextId = useId();
 
-	return (
+	const [showLocalizationOptions, setShowLocalizationOptions] =
+		useState(false);
+
+	useEffect(() => {
+		hasLocalizableFields(stateRef.current, item.itemId).then(
+			(hasLocalizableFields) => {
+				setShowLocalizationOptions(hasLocalizableFields);
+			}
+		);
+	}, [stateRef, item.itemId]);
+
+	return showLocalizationOptions ? (
 		<div className="mb-3 panel-group-sm">
 			<ClayPanel
 				collapsable
@@ -505,8 +522,10 @@ function LocalizationOptions({item, onValueSelect}) {
 					<ClayForm.Group small>
 						<SelectField
 							field={{
-								label: Liferay.Language.get('success-action'),
-								name: 'source',
+								label: Liferay.Language.get(
+									'unlocalizable-fields-state'
+								),
+								name: 'unlocalizableFieldsState',
 								typeOptions: {
 									validValues:
 										UNLOCALIZED_FIELDS_STATE_OPTIONS,
@@ -568,5 +587,5 @@ function LocalizationOptions({item, onValueSelect}) {
 				</ClayPanel.Body>
 			</ClayPanel>
 		</div>
-	);
+	) : null;
 }

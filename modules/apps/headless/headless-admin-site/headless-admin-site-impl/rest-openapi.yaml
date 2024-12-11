@@ -1444,6 +1444,7 @@ components:
                     enum: [
                         None,
                         Numeric,
+                        Regular,
                         Simple]
                     type: string
                 templateKey:
@@ -1540,7 +1541,7 @@ components:
                         The page section's html properties
                     properties:
                         htmlTag:
-                            enum: [Article, Aside, Div, Footer, Header, Main, Nav, Section]
+                            enum: [Article, Aside, Div, Footer, Header, Nav, Section]
                             type: string
                     type: object
                 indexed:
@@ -3422,7 +3423,7 @@ components:
 info:
     description:
         "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID
-        'com.liferay.headless.admin.site.client', and version '1.0.4'."
+        'com.liferay.headless.admin.site.client', and version '1.0.5'."
     license:
         name: Apache 2.0
         url: http://www.apache.org/licenses/LICENSE-2.0.html

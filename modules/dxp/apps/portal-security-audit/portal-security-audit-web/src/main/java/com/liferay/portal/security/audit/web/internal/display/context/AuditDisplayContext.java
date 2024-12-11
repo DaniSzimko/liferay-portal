@@ -5,6 +5,7 @@
 
 package com.liferay.portal.security.audit.web.internal.display.context;
 
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.search.DisplayTerms;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
@@ -71,7 +72,8 @@ public class AuditDisplayContext {
 			return _className;
 		}
 
-		_className = ParamUtil.getString(_httpServletRequest, "className");
+		_className = _getParamWithOrWithoutNamespace(
+			ParamUtil::getString, "className", StringPool.BLANK);
 
 		return _className;
 	}
@@ -81,7 +83,8 @@ public class AuditDisplayContext {
 			return _classPK;
 		}
 
-		_classPK = ParamUtil.getString(_httpServletRequest, "classPK");
+		_classPK = _getParamWithOrWithoutNamespace(
+			ParamUtil::getString, "classPK", StringPool.BLANK);
 
 		return _classPK;
 	}
@@ -91,7 +94,8 @@ public class AuditDisplayContext {
 			return _clientHost;
 		}
 
-		_clientHost = ParamUtil.getString(_httpServletRequest, "clientHost");
+		_clientHost = _getParamWithOrWithoutNamespace(
+			ParamUtil::getString, "clientHost", StringPool.BLANK);
 
 		return _clientHost;
 	}
@@ -101,7 +105,8 @@ public class AuditDisplayContext {
 			return _clientIP;
 		}
 
-		_clientIP = ParamUtil.getString(_httpServletRequest, "clientIP");
+		_clientIP = _getParamWithOrWithoutNamespace(
+			ParamUtil::getString, "clientIP", StringPool.BLANK);
 
 		return _clientIP;
 	}
@@ -112,7 +117,7 @@ public class AuditDisplayContext {
 		}
 
 		_endDateAmPm = _getParamWithOrWithoutNamespace(
-			"endDateAmPm", _today.get(Calendar.AM_PM));
+			ParamUtil::getInteger, "endDateAmPm", _today.get(Calendar.AM_PM));
 
 		return _endDateAmPm;
 	}
@@ -123,7 +128,7 @@ public class AuditDisplayContext {
 		}
 
 		_endDateDay = _getParamWithOrWithoutNamespace(
-			"endDateDay", _today.get(Calendar.DATE));
+			ParamUtil::getInteger, "endDateDay", _today.get(Calendar.DATE));
 
 		return _endDateDay;
 	}
@@ -134,7 +139,7 @@ public class AuditDisplayContext {
 		}
 
 		_endDateHour = _getParamWithOrWithoutNamespace(
-			"endDateHour", _today.get(Calendar.HOUR));
+			ParamUtil::getInteger, "endDateHour", _today.get(Calendar.HOUR));
 
 		return _endDateHour;
 	}
@@ -145,7 +150,8 @@ public class AuditDisplayContext {
 		}
 
 		_endDateMinute = _getParamWithOrWithoutNamespace(
-			"endDateMinute", _today.get(Calendar.MINUTE));
+			ParamUtil::getInteger, "endDateMinute",
+			_today.get(Calendar.MINUTE));
 
 		return _endDateMinute;
 	}
@@ -156,7 +162,7 @@ public class AuditDisplayContext {
 		}
 
 		_endDateMonth = _getParamWithOrWithoutNamespace(
-			"endDateMonth", _today.get(Calendar.MONTH));
+			ParamUtil::getInteger, "endDateMonth", _today.get(Calendar.MONTH));
 
 		return _endDateMonth;
 	}
@@ -167,7 +173,7 @@ public class AuditDisplayContext {
 		}
 
 		_endDateYear = _getParamWithOrWithoutNamespace(
-			"endDateYear", _today.get(Calendar.YEAR));
+			ParamUtil::getInteger, "endDateYear", _today.get(Calendar.YEAR));
 
 		return _endDateYear;
 	}
@@ -177,7 +183,8 @@ public class AuditDisplayContext {
 			return _eventType;
 		}
 
-		_eventType = ParamUtil.getString(_httpServletRequest, "eventType");
+		_eventType = _getParamWithOrWithoutNamespace(
+			ParamUtil::getString, "eventType", StringPool.BLANK);
 
 		return _eventType;
 	}
@@ -187,7 +194,8 @@ public class AuditDisplayContext {
 			return _groupId;
 		}
 
-		_groupId = ParamUtil.getInteger(_httpServletRequest, "groupId");
+		_groupId = _getParamWithOrWithoutNamespace(
+			ParamUtil::getInteger, "groupId", 0);
 
 		return _groupId;
 	}
@@ -271,7 +279,8 @@ public class AuditDisplayContext {
 			return _serverName;
 		}
 
-		_serverName = ParamUtil.getString(_httpServletRequest, "serverName");
+		_serverName = _getParamWithOrWithoutNamespace(
+			ParamUtil::getString, "serverName", StringPool.BLANK);
 
 		return _serverName;
 	}
@@ -281,7 +290,8 @@ public class AuditDisplayContext {
 			return _serverPort;
 		}
 
-		_serverPort = ParamUtil.getInteger(_httpServletRequest, "serverPort");
+		_serverPort = _getParamWithOrWithoutNamespace(
+			ParamUtil::getInteger, "serverPort", 0);
 
 		return _serverPort;
 	}
@@ -292,7 +302,8 @@ public class AuditDisplayContext {
 		}
 
 		_startDateAmPm = _getParamWithOrWithoutNamespace(
-			"startDateAmPm", _yesterday.get(Calendar.AM_PM));
+			ParamUtil::getInteger, "startDateAmPm",
+			_yesterday.get(Calendar.AM_PM));
 
 		return _startDateAmPm;
 	}
@@ -303,7 +314,8 @@ public class AuditDisplayContext {
 		}
 
 		_startDateDay = _getParamWithOrWithoutNamespace(
-			"startDateDay", _yesterday.get(Calendar.DATE));
+			ParamUtil::getInteger, "startDateDay",
+			_yesterday.get(Calendar.DATE));
 
 		return _startDateDay;
 	}
@@ -314,7 +326,8 @@ public class AuditDisplayContext {
 		}
 
 		_startDateHour = _getParamWithOrWithoutNamespace(
-			"startDateHour", _yesterday.get(Calendar.HOUR));
+			ParamUtil::getInteger, "startDateHour",
+			_yesterday.get(Calendar.HOUR));
 
 		return _startDateHour;
 	}
@@ -325,7 +338,8 @@ public class AuditDisplayContext {
 		}
 
 		_startDateMinute = _getParamWithOrWithoutNamespace(
-			"startDateMinute", _yesterday.get(Calendar.MINUTE));
+			ParamUtil::getInteger, "startDateMinute",
+			_yesterday.get(Calendar.MINUTE));
 
 		return _startDateMinute;
 	}
@@ -336,7 +350,8 @@ public class AuditDisplayContext {
 		}
 
 		_startDateMonth = _getParamWithOrWithoutNamespace(
-			"startDateMonth", _yesterday.get(Calendar.MONTH));
+			ParamUtil::getInteger, "startDateMonth",
+			_yesterday.get(Calendar.MONTH));
 
 		return _startDateMonth;
 	}
@@ -347,7 +362,8 @@ public class AuditDisplayContext {
 		}
 
 		_startDateYear = _getParamWithOrWithoutNamespace(
-			"startDateYear", _yesterday.get(Calendar.YEAR));
+			ParamUtil::getInteger, "startDateYear",
+			_yesterday.get(Calendar.YEAR));
 
 		return _startDateYear;
 	}
@@ -357,7 +373,8 @@ public class AuditDisplayContext {
 			return _userId;
 		}
 
-		_userId = ParamUtil.getLong(_httpServletRequest, "userId");
+		_userId = _getParamWithOrWithoutNamespace(
+			ParamUtil::getLong, "userId", 0L);
 
 		return _userId;
 	}
@@ -367,7 +384,8 @@ public class AuditDisplayContext {
 			return _userName;
 		}
 
-		_userName = ParamUtil.getString(_httpServletRequest, "userName");
+		_userName = _getParamWithOrWithoutNamespace(
+			ParamUtil::getString, "userName", StringPool.BLANK);
 
 		return _userName;
 	}
@@ -376,15 +394,24 @@ public class AuditDisplayContext {
 		_paging = paging;
 	}
 
-	private int _getParamWithOrWithoutNamespace(
-		String param, int defaultValue) {
+	@FunctionalInterface
+	public interface ParamGetter<V> {
 
-		return ParamUtil.getInteger(
+		public V get(
+			HttpServletRequest httpServletRequest, String param,
+			V defaultValue);
+
+	}
+
+	private <T> T _getParamWithOrWithoutNamespace(
+		ParamGetter<T> paramGetter, String param, T defaultValue) {
+
+		return paramGetter.get(
 			(HttpServletRequest)_servletRequestWrapper.getRequest(),
 			PortletQName.PUBLIC_RENDER_PARAMETER_NAMESPACE + param,
-			ParamUtil.getInteger(
+			paramGetter.get(
 				(HttpServletRequest)_servletRequestWrapper.getRequest(), param,
-				defaultValue));
+				paramGetter.get(_httpServletRequest, param, defaultValue)));
 	}
 
 	private PortletURL _getPortletURL() throws Exception {

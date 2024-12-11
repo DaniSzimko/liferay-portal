@@ -5,36 +5,32 @@
 
 import {Locator, Page} from '@playwright/test';
 
-import {clickAndExpectToBeVisible} from '../../../utils/clickAndExpectToBeVisible';
 import {waitForAlert} from '../../../utils/waitForAlert';
+import {AssetCategoriesAdminPage} from './AssetCategoriesAdminPage';
 
 export class AssetCategoriesEditPage {
+	readonly addButton: Locator;
+	readonly assetCategoriesAdminPage: AssetCategoriesAdminPage;
+	readonly cancelButton: Locator;
+	readonly deleteButton: Locator;
+	readonly descriptionField: Locator;
+	readonly nameInput: Locator;
 	readonly page: Page;
 	readonly propertiesTab: Locator;
-	readonly cancelButton: Locator;
 	readonly saveButton: Locator;
 
 	constructor(page: Page) {
-		this.propertiesTab = page.getByRole('link', {name: 'properties'});
+		this.addButton = page.getByRole('button', {name: 'Add'});
+		this.assetCategoriesAdminPage = new AssetCategoriesAdminPage(page);
 		this.cancelButton = page.getByRole('button', {name: 'Cancel'});
-		this.saveButton = page.getByRole('button', {name: 'Save'});
-
+		this.deleteButton = page.getByRole('button', {name: 'Delete'});
+		this.descriptionField = page
+			.frameLocator('iframe[title="editor"]')
+			.getByRole('textbox');
+		this.nameInput = page.getByPlaceholder('Name');
 		this.page = page;
-	}
-
-	async goto(title: string) {
-		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: this.page.getByRole('menuitem', {name: 'Edit'}),
-			trigger: this.page
-				.getByRole('row', {name: title})
-				.getByLabel('Show Actions'),
-		});
-	}
-
-	async goToPropertiesTab(title: string) {
-		await this.goto(title);
-		await this.propertiesTab.click();
+		this.propertiesTab = page.getByRole('link', {name: 'properties'});
+		this.saveButton = page.getByRole('button', {exact: true, name: 'Save'});
 	}
 
 	async addProperties(
@@ -68,8 +64,31 @@ export class AssetCategoriesEditPage {
 		}
 	}
 
-	async save() {
-		await this.saveButton.click();
+	async fillName(name: string) {
+		await this.descriptionField.waitFor();
+		await this.nameInput.fill(name);
+	}
+
+	async goto(title: string) {
+		await this.assetCategoriesAdminPage.gotoAction('Edit', title);
+	}
+
+	async goToPropertiesTab(title: string) {
+		await this.goto(title);
+		await this.propertiesTab.click();
+	}
+
+	async moveCategory(categoryName: string, vocabularyName: string) {
+		await this.page
+			.frameLocator(`iframe[title="Move ${categoryName}"]`)
+			.getByText(vocabularyName)
+			.click();
+		await this.addButton.click();
 		await waitForAlert(this.page);
+	}
+
+	async save(successMessage?: string) {
+		await this.saveButton.click();
+		await waitForAlert(this.page, successMessage);
 	}
 }

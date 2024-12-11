@@ -129,6 +129,12 @@ public interface JournalFolderService extends BaseService {
 		OrderByComparator<?> orderByComparator);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<Object> getFoldersAndArticles(
+		long groupId, long userId, long folderId, long ddmStructureId,
+		int status, Locale locale, int[] excludedStatuses, int start, int end,
+		OrderByComparator<?> orderByComparator);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getFoldersAndArticlesCount(
 		long groupId, List<Long> folderIds, int status);
 
@@ -147,6 +153,11 @@ public interface JournalFolderService extends BaseService {
 	public int getFoldersAndArticlesCount(
 		long groupId, long userId, long folderId, long ddmStructureId,
 		int status);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int getFoldersAndArticlesCount(
+		long groupId, long userId, long folderId, long ddmStructureId,
+		int[] excludedStatuses, int status);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getFoldersCount(long groupId, long parentFolderId);

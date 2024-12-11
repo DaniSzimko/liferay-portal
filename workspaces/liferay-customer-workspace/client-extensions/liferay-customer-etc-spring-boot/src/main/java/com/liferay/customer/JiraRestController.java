@@ -15,6 +15,9 @@ import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,7 +70,9 @@ public class JiraRestController extends BaseRestController {
 	}
 
 	@RequestMapping(method = RequestMethod.GET, path = "/jira/issue/{issueKey}")
-	public ResponseEntity<String> get(@PathVariable("issueKey") String issueKey)
+	public ResponseEntity<String> get(
+			@AuthenticationPrincipal Jwt jwt,
+			@PathVariable("issueKey") String issueKey)
 		throws Exception {
 
 		try {
@@ -79,8 +84,13 @@ public class JiraRestController extends BaseRestController {
 
 			JSONObject responseJSONObject = _transformIssue(jsonObject);
 
+			if (_hasIssuePermission(jwt, responseJSONObject)) {
+				return new ResponseEntity<>(
+					responseJSONObject.toString(), HttpStatus.OK);
+			}
+
 			return new ResponseEntity<>(
-				responseJSONObject.toString(), HttpStatus.OK);
+				"No issue found with key " + issueKey, HttpStatus.NOT_FOUND);
 		}
 		catch (Exception exception) {
 			_log.error(exception, exception);
@@ -151,7 +161,7 @@ public class JiraRestController extends BaseRestController {
 				sb.append(" AND ");
 				sb.append(
 					_getJQLCustomField(
-						_jiraSecurityVulnerabilityFieldCategory));
+						_jiraSecurityVulnerabilityFieldCategories));
 				sb.append(" in ('");
 				sb.append(StringUtil.merge(filterCategories, "','"));
 				sb.append("')");
@@ -225,7 +235,8 @@ public class JiraRestController extends BaseRestController {
 			String[] securityVulnerabilitiesIssueFields = {
 				_FIELD_COMPONENTS, _FIELD_ISSUE_KEY, _FIELD_VERSIONS,
 				_jiraSecurityVulnerabilityFieldAffectedVersionsDetails,
-				_jiraSecurityVulnerabilityFieldCategory,
+				_jiraSecurityVulnerabilityFieldAffects,
+				_jiraSecurityVulnerabilityFieldCategories,
 				_jiraSecurityVulnerabilityFieldCustomerPortalDescription,
 				_jiraSecurityVulnerabilityFieldCustomerPortalSummary,
 				_jiraSecurityVulnerabilityFieldCustomerPublishingDate,
@@ -275,9 +286,17 @@ public class JiraRestController extends BaseRestController {
 		for (int i = 0; i < jsonArray.length(); i++) {
 			JSONObject jsonObject = jsonArray.getJSONObject(i);
 
-			String fieldValue = jsonObject.getString("name");
+			String name = jsonObject.optString("name");
 
-			flattenedJSONArray.put(fieldValue);
+			if (Validator.isNotNull(name)) {
+				flattenedJSONArray.put(name);
+			}
+
+			String value = jsonObject.optString("value");
+
+			if (Validator.isNotNull(value)) {
+				flattenedJSONArray.put(value);
+			}
 		}
 
 		return flattenedJSONArray;
@@ -410,6 +429,43 @@ public class JiraRestController extends BaseRestController {
 		return false;
 	}
 
+	private boolean _hasIssuePermission(Jwt jwt, JSONObject issueJSONObject) {
+		JSONObject fieldsJSONObject = issueJSONObject.getJSONObject("fields");
+
+		String publishingStatus = fieldsJSONObject.optString(
+			"publishingStatus");
+
+		if (publishingStatus.equals("Ready for Publishing")) {
+			LocalDateTime localDateTime = _parseLocalDateTime(
+				jwt, issueJSONObject);
+
+			if (localDateTime.isBefore(LocalDateTime.now())) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private LocalDateTime _parseLocalDateTime(
+		Jwt jwt, JSONObject issueJSONObject) {
+
+		JSONObject fieldsJSONObject = issueJSONObject.getJSONObject("fields");
+
+		DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(
+			"yyyy-MM-dd'T'HH:mm:ss.SSSx");
+
+		if (_hasEarlyPublishAccess(jwt)) {
+			return LocalDateTime.parse(
+				fieldsJSONObject.optString("partnerPublishingDate"),
+				dateTimeFormatter);
+		}
+
+		return LocalDateTime.parse(
+			fieldsJSONObject.optString("customerPublishingDate"),
+			dateTimeFormatter);
+	}
+
 	private JSONObject _search(
 			String jql, int maxResults, String[] returnFields, int startAt)
 		throws Exception {
@@ -471,10 +527,14 @@ public class JiraRestController extends BaseRestController {
 			_flattenJSONArray(
 				issueFieldsJSONObject.getJSONArray(_FIELD_VERSIONS))
 		).put(
-			"category",
-			_getJSONObjectFieldValue(
-				issueFieldsJSONObject.optJSONObject(
-					_jiraSecurityVulnerabilityFieldCategory))
+			"affects",
+			issueFieldsJSONObject.optString(
+				_jiraSecurityVulnerabilityFieldAffects)
+		).put(
+			"categories",
+			_flattenJSONArray(
+				issueFieldsJSONObject.optJSONArray(
+					_jiraSecurityVulnerabilityFieldCategories))
 		).put(
 			"components",
 			_flattenJSONArray(
@@ -583,8 +643,11 @@ public class JiraRestController extends BaseRestController {
 	)
 	private String _jiraSecurityVulnerabilityFieldAffectedVersionsDetails;
 
-	@Value("${liferay.customer.jira.security.vulnerability.field.category}")
-	private String _jiraSecurityVulnerabilityFieldCategory;
+	@Value("${liferay.customer.jira.security.vulnerability.field.affects}")
+	private String _jiraSecurityVulnerabilityFieldAffects;
+
+	@Value("${liferay.customer.jira.security.vulnerability.field.categories}")
+	private String _jiraSecurityVulnerabilityFieldCategories;
 
 	@Value(
 		"${liferay.customer.jira.security.vulnerability.field.customer.portal.description}"

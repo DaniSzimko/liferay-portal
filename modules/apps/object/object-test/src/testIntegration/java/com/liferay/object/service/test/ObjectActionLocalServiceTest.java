@@ -46,7 +46,6 @@ import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.exception.ObjectActionErrorMessageException;
 import com.liferay.object.exception.ObjectActionExecutorKeyException;
-import com.liferay.object.exception.ObjectActionLabelException;
 import com.liferay.object.exception.ObjectActionNameException;
 import com.liferay.object.exception.ObjectActionParametersException;
 import com.liferay.object.exception.ObjectActionSystemException;
@@ -395,13 +394,6 @@ public class ObjectActionLocalServiceTest {
 					false));
 		}
 
-		AssertUtils.assertFailure(
-			ObjectActionLabelException.class,
-			"Label is null for locale " + LocaleUtil.US.getDisplayName(),
-			() -> _addObjectAction(
-				StringPool.BLANK, RandomTestUtil.randomString(),
-				StringPool.BLANK, RandomTestUtil.randomString(),
-				ObjectActionTriggerConstants.KEY_ON_AFTER_ADD, false));
 		AssertUtils.assertFailure(
 			ObjectActionSystemException.class, false,
 			"Only allowed bundles can add system object actions",
@@ -1071,7 +1063,9 @@ public class ObjectActionLocalServiceTest {
 		_publishCustomObjectDefinition();
 
 		ObjectAction objectAction1 = _addObjectAction(
-			"equals(firstName, \"João\")", RandomTestUtil.randomString(),
+			"equals(firstName, \"João\")",
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			RandomTestUtil.randomString(),
 			ObjectActionExecutorConstants.KEY_GROOVY,
 			ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE,
 			UnicodePropertiesBuilder.put(
@@ -1110,7 +1104,9 @@ public class ObjectActionLocalServiceTest {
 		_objectActionLocalService.deleteObjectAction(objectAction1);
 
 		ObjectAction objectAction2 = _addObjectAction(
-			"currentUserId == creator", RandomTestUtil.randomString(),
+			"currentUserId == creator",
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			RandomTestUtil.randomString(),
 			ObjectActionExecutorConstants.KEY_UPDATE_OBJECT_ENTRY,
 			ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE,
 			UnicodePropertiesBuilder.put(
@@ -1129,7 +1125,9 @@ public class ObjectActionLocalServiceTest {
 			).build(),
 			false);
 		ObjectAction objectAction3 = _addObjectAction(
-			"currentUserId != creator", RandomTestUtil.randomString(),
+			"currentUserId != creator",
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			RandomTestUtil.randomString(),
 			ObjectActionExecutorConstants.KEY_UPDATE_OBJECT_ENTRY,
 			ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE,
 			UnicodePropertiesBuilder.put(
@@ -1175,6 +1173,7 @@ public class ObjectActionLocalServiceTest {
 
 		ObjectAction objectAction4 = _addObjectAction(
 			"oldValue(\"firstName\") == \"Paulo\"",
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			RandomTestUtil.randomString(),
 			ObjectActionExecutorConstants.KEY_ADD_OBJECT_ENTRY,
 			ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE,
@@ -2191,11 +2190,78 @@ public class ObjectActionLocalServiceTest {
 	}
 
 	@Test
+	public void testPopulateLabelMap() throws Exception {
+
+		// Label map has multiple locales but no default locale
+
+		ObjectAction objectAction1 = _addObjectAction(
+			StringPool.BLANK,
+			HashMapBuilder.put(
+				LocaleUtil.BRAZIL, "pt_BR objectAction2Label"
+			).put(
+				LocaleUtil.SPAIN, "es_ES objectAction2Label"
+			).build(),
+			RandomTestUtil.randomString(),
+			ObjectActionExecutorConstants.KEY_GROOVY,
+			ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE,
+			new UnicodeProperties(), false);
+
+		Assert.assertEquals(
+			HashMapBuilder.put(
+				_objectDefinition.getDefaultLocale(), objectAction1.getName()
+			).put(
+				LocaleUtil.BRAZIL, "pt_BR objectAction2Label"
+			).put(
+				LocaleUtil.SPAIN, "es_ES objectAction2Label"
+			).build(),
+			objectAction1.getLabelMap());
+
+		// Label map has one locale that is not the default locale
+
+		ObjectAction objectAction2 = _addObjectAction(
+			StringPool.BLANK,
+			HashMapBuilder.put(
+				LocaleUtil.BRAZIL, "pt_BR objectAction3Label"
+			).build(),
+			RandomTestUtil.randomString(),
+			ObjectActionExecutorConstants.KEY_GROOVY,
+			ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE,
+			new UnicodeProperties(), false);
+
+		Assert.assertEquals(
+			HashMapBuilder.put(
+				_objectDefinition.getDefaultLocale(), "pt_BR objectAction3Label"
+			).put(
+				LocaleUtil.BRAZIL, "pt_BR objectAction3Label"
+			).build(),
+			objectAction2.getLabelMap());
+
+		// Label map is null
+
+		ObjectAction objectAction3 = _addObjectAction(
+			StringPool.BLANK, null, RandomTestUtil.randomString(),
+			ObjectActionExecutorConstants.KEY_GROOVY,
+			ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE,
+			new UnicodeProperties(), false);
+
+		Assert.assertEquals(
+			Collections.singletonMap(
+				_objectDefinition.getDefaultLocale(), objectAction3.getName()),
+			objectAction3.getLabelMap());
+
+		_objectActionLocalService.deleteObjectAction(objectAction1);
+		_objectActionLocalService.deleteObjectAction(objectAction2);
+		_objectActionLocalService.deleteObjectAction(objectAction3);
+	}
+
+	@Test
 	public void testSequentialObjectActions() throws Exception {
 		_publishCustomObjectDefinition();
 
 		ObjectAction objectAction1 = _addObjectAction(
-			null, RandomTestUtil.randomString(),
+			null,
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			RandomTestUtil.randomString(),
 			ObjectActionExecutorConstants.KEY_UPDATE_OBJECT_ENTRY,
 			ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE,
 			UnicodePropertiesBuilder.put(
@@ -2214,7 +2280,9 @@ public class ObjectActionLocalServiceTest {
 			).build(),
 			false);
 		ObjectAction objectAction2 = _addObjectAction(
-			null, RandomTestUtil.randomString(),
+			null,
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			RandomTestUtil.randomString(),
 			ObjectActionExecutorConstants.KEY_UPDATE_OBJECT_ENTRY,
 			ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE,
 			UnicodePropertiesBuilder.put(
@@ -2522,6 +2590,22 @@ public class ObjectActionLocalServiceTest {
 			objectActionTriggerKey, parametersUnicodeProperties, false);
 	}
 
+	private ObjectAction _addObjectAction(
+			String conditionExpression, Map<Locale, String> labelMap,
+			String name, String objectActionExecutorKey,
+			String objectActionTriggerKey, UnicodeProperties unicodeProperties,
+			boolean system)
+		throws Exception {
+
+		return _objectActionLocalService.addObjectAction(
+			RandomTestUtil.randomString(), TestPropsValues.getUserId(),
+			_objectDefinition.getObjectDefinitionId(), true,
+			conditionExpression, RandomTestUtil.randomString(),
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			labelMap, name, objectActionExecutorKey, objectActionTriggerKey,
+			unicodeProperties, system);
+	}
+
 	private void _addObjectAction(
 			String errorMessage, String externalReferenceCode, String label,
 			String name, String objectActionTriggerKey, boolean system)
@@ -2538,30 +2622,16 @@ public class ObjectActionLocalServiceTest {
 	}
 
 	private ObjectAction _addObjectAction(
-			String conditionExpression, String name,
-			String objectActionExecutorKey, String objectActionTriggerKey,
-			UnicodeProperties unicodeProperties, boolean system)
-		throws Exception {
-
-		return _objectActionLocalService.addObjectAction(
-			RandomTestUtil.randomString(), TestPropsValues.getUserId(),
-			_objectDefinition.getObjectDefinitionId(), true,
-			conditionExpression, RandomTestUtil.randomString(),
-			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-			name, objectActionExecutorKey, objectActionTriggerKey,
-			unicodeProperties, system);
-	}
-
-	private ObjectAction _addObjectAction(
 			String name, String objectActionExecutorKey,
 			String objectActionTriggerKey, UnicodeProperties unicodeProperties,
 			boolean system)
 		throws Exception {
 
 		return _addObjectAction(
-			StringPool.BLANK, name, objectActionExecutorKey,
-			objectActionTriggerKey, unicodeProperties, system);
+			StringPool.BLANK,
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			name, objectActionExecutorKey, objectActionTriggerKey,
+			unicodeProperties, system);
 	}
 
 	private void _assertGroovyObjectActionExecutorArguments(

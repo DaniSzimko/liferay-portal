@@ -80,6 +80,7 @@ public class ObjectRelationshipExtensionProviderTest {
 
 		ObjectDefinition userSystemObjectDefinition =
 			_objectDefinitionLocalService.fetchSystemObjectDefinition(
+				TestPropsValues.getCompanyId(),
 				_userSystemObjectDefinitionManager.getName());
 
 		_user = TestPropsValues.getUser();

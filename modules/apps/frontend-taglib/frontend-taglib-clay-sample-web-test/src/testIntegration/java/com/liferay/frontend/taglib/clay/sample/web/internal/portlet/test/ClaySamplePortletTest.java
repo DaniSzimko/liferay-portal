@@ -91,6 +91,35 @@ public class ClaySamplePortletTest {
 		}
 	}
 
+	@Test
+	public void testSearchBarIsDisabled() throws Exception {
+		ServiceContextThreadLocal.pushServiceContext(
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+
+		Layout layout = LayoutTestUtil.addTypePortletLayout(_group);
+
+		LayoutTestUtil.addPortletToLayout(
+			TestPropsValues.getUserId(), layout, _PORTLET_NAME, "column-1",
+			null);
+
+		PortletContainerTestUtil.Response response =
+			PortletContainerTestUtil.request(
+				PortletURLBuilder.create(
+					_portletURLFactory.create(
+						PortletContainerTestUtil.getHttpServletRequest(
+							_group, layout),
+						_PORTLET_NAME, layout.getPlid(),
+						PortletRequest.RENDER_PHASE)
+				).buildString());
+
+		String body = response.getBody();
+
+		Assert.assertTrue(
+			body.contains(
+				"<input class=\"form-control form-control input-group-inset " +
+					"input-group-inset-after\" disabled"));
+	}
+
 	private static final String _PORTLET_NAME =
 		"com_liferay_clay_sample_web_portlet_ClaySamplePortlet";
 

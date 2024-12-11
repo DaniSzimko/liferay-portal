@@ -6,12 +6,12 @@
 package com.liferay.commerce.product.internal.search.spi.model.query.contributor;
 
 import com.liferay.commerce.product.constants.CPField;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.filter.BooleanFilter;
 import com.liferay.portal.kernel.search.filter.TermFilter;
+import com.liferay.portal.kernel.search.filter.TermsFilter;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.search.spi.model.query.contributor.ModelPreFilterContributor;
 import com.liferay.portal.search.spi.model.registrar.ModelSearchSettings;
@@ -44,12 +44,25 @@ public class CPConfigurationEntryModelPreFilterContributor
 				new TermFilter(
 					CPField.CP_CONFIGURATION_LIST_ID,
 					String.valueOf(cpConfigurationListId)),
-				BooleanClauseOccur.MUST);
+				BooleanClauseOccur.SHOULD);
+
+			TermsFilter termsFilter = new TermsFilter(
+				CPField.CP_CONFIGURATION_LIST_IDS);
+
+			termsFilter.addValue(String.valueOf(cpConfigurationListId));
+
+			booleanFilter.add(termsFilter, BooleanClauseOccur.SHOULD);
 		}
 
-		booleanFilter.add(
-			new TermFilter(Field.ENTRY_CLASS_PK, StringPool.BLANK),
-			BooleanClauseOccur.MUST_NOT);
+		long classNameId = GetterUtil.getLong(
+			searchContext.getAttribute(Field.CLASS_NAME_ID));
+
+		if (classNameId > 0) {
+			booleanFilter.add(
+				new TermFilter(
+					Field.CLASS_NAME_ID, String.valueOf(classNameId)),
+				BooleanClauseOccur.MUST);
+		}
 	}
 
 }

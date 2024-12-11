@@ -13,4 +13,6 @@ public class CTDestinationNames {
 	public static final String CT_COLLECTION_SCHEDULED_PUBLISH =
 		"liferay/ct_collection_scheduled_publish";
 
+	public static final String CT_SCORE = "liferay/ct_score";
+
 }

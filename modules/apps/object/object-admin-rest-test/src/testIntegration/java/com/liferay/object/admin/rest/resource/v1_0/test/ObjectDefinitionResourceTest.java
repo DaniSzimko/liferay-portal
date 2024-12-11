@@ -459,6 +459,7 @@ public class ObjectDefinitionResourceTest
 		com.liferay.object.model.ObjectDefinition
 			serviceBuilderAccountEntryObjectDefinition =
 				_objectDefinitionLocalService.fetchSystemObjectDefinition(
+					TestPropsValues.getCompanyId(),
 					AccountEntry.class.getSimpleName());
 
 		_objectDefinitionLocalService.enableAccountEntryRestricted(

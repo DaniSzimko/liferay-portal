@@ -11,17 +11,23 @@ import com.liferay.portal.dao.orm.common.SQLTransformer;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
+import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
+import com.liferay.portal.kernel.service.ReleaseLocalServiceUtil;
 import com.liferay.portal.kernel.service.ResourceLocalServiceUtil;
 import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.LoggingTimer;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.verify.model.VerifiableResourcedModel;
 import com.liferay.portal.verify.model.GroupVerifiableResourcedModel;
 import com.liferay.portal.verify.model.LayoutBranchVerifiableResourcedModel;
+import com.liferay.portal.verify.model.LayoutVerifiableResourcedModel;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -56,7 +62,8 @@ public class VerifyResourcePermissions extends VerifyProcess {
 
 		doVerify(
 			new GroupVerifiableResourcedModel(),
-			new LayoutBranchVerifiableResourcedModel());
+			new LayoutBranchVerifiableResourcedModel(),
+			new LayoutVerifiableResourcedModel());
 	}
 
 	protected void doVerify(
@@ -70,6 +77,12 @@ public class VerifyResourcePermissions extends VerifyProcess {
 
 				for (VerifiableResourcedModel verifiableResourcedModel :
 						verifiableResourcedModels) {
+
+					if (_isSkipVerifyResourcePermissions(
+							verifiableResourcedModel)) {
+
+						continue;
+					}
 
 					_verifyResourcedModel(role, verifiableResourcedModel);
 				}
@@ -101,7 +114,7 @@ public class VerifyResourcePermissions extends VerifyProcess {
 		boolean count, VerifiableResourcedModel verifiableResourcedModel,
 		Role role) {
 
-		StringBundler sb = new StringBundler(28);
+		StringBundler sb = new StringBundler(29);
 
 		sb.append("select ");
 
@@ -116,6 +129,12 @@ public class VerifyResourcePermissions extends VerifyProcess {
 			sb.append(verifiableResourcedModel.getTableName());
 			sb.append(".");
 			sb.append(verifiableResourcedModel.getUserIdColumnName());
+
+			if (verifiableResourcedModel instanceof
+					LayoutVerifiableResourcedModel) {
+
+				sb.append(", Layout.groupId, Layout.privateLayout");
+			}
 		}
 
 		sb.append(" from ");
@@ -142,6 +161,27 @@ public class VerifyResourcePermissions extends VerifyProcess {
 		return SQLTransformer.transform(sb.toString());
 	}
 
+	private boolean _isSkipVerifyResourcePermissions(
+		VerifiableResourcedModel verifiableResourcedModel) {
+
+		if (!(verifiableResourcedModel instanceof
+				LayoutVerifiableResourcedModel)) {
+
+			return false;
+		}
+
+		Release release = ReleaseLocalServiceUtil.fetchRelease(
+			"com.liferay.layout.service");
+
+		if ((release != null) &&
+			StringUtil.equals(release.getSchemaVersion(), "0.0.0")) {
+
+			return false;
+		}
+
+		return true;
+	}
+
 	private void _verifyResourcedModel(
 			Role role, VerifiableResourcedModel verifiableResourcedModel)
 		throws Exception {
@@ -156,24 +196,58 @@ public class VerifyResourcePermissions extends VerifyProcess {
 			processConcurrently(
 				_getVerifyResourcedModelSQL(
 					false, verifiableResourcedModel, role),
-				resultSet -> new Object[] {
-					resultSet.getLong(
-						verifiableResourcedModel.getPrimaryKeyColumnName()),
-					resultSet.getLong(
-						verifiableResourcedModel.getUserIdColumnName())
+				resultSet -> {
+					Object[] values = {
+						resultSet.getLong(
+							verifiableResourcedModel.getPrimaryKeyColumnName()),
+						resultSet.getLong(
+							verifiableResourcedModel.getUserIdColumnName())
+					};
+
+					if (verifiableResourcedModel instanceof
+							LayoutVerifiableResourcedModel) {
+
+						values = new Object[] {
+							values[0], values[1],
+							resultSet.getLong("Layout.groupId"),
+							resultSet.getBoolean("Layout.privateLayout")
+						};
+					}
+
+					return values;
 				},
 				values -> {
 					long primKey = (Long)values[0];
 					long ownerId = (Long)values[1];
 
-					long companyId = role.getCompanyId();
-					long roleId = role.getRoleId();
+					long groupId = 0;
 
-					String modelName = verifiableResourcedModel.getModelName();
+					boolean addGroupPermission = false;
+					boolean addGuestPermission = false;
+
+					if (verifiableResourcedModel instanceof
+							LayoutVerifiableResourcedModel) {
+
+						groupId = (Long)values[2];
+						boolean privateLayout = (Boolean)values[3];
+
+						if (!privateLayout) {
+							addGroupPermission = true;
+							addGuestPermission = true;
+						}
+						else {
+							Group group = GroupLocalServiceUtil.getGroup(
+								groupId);
+
+							if (!group.isUser() && !group.isUserGroup()) {
+								addGroupPermission = true;
+							}
+						}
+					}
 
 					int processedCount = atomicInteger.getAndIncrement();
 
-					if (_log.isInfoEnabled() &&
+					if (_log.isInfoEnabled() && (processedCount > 0) &&
 						((processedCount % 100000) == 0)) {
 
 						_log.info(
@@ -182,31 +256,35 @@ public class VerifyResourcePermissions extends VerifyProcess {
 								verifiableResourcedModelsCount.getSingleton(
 									() -> _getVerifiableResourcedModelsCount(
 										role, verifiableResourcedModel)),
-								" resource permissions for company ", companyId,
-								" and model ", modelName));
+								" resource permissions for company ",
+								role.getCompanyId(), " and model ",
+								verifiableResourcedModel.getModelName()));
 					}
 
 					if (_log.isDebugEnabled()) {
 						_log.debug(
 							StringBundler.concat(
-								"No resource found for {", companyId, ", ",
-								modelName, ", ",
-								ResourceConstants.SCOPE_INDIVIDUAL, ", ",
-								primKey, ", ", roleId, "}"));
+								"No resource found for {", role.getCompanyId(),
+								", ", verifiableResourcedModel.getModelName(),
+								", ", ResourceConstants.SCOPE_INDIVIDUAL, ", ",
+								primKey, ", ", role.getRoleId(), "}"));
 					}
 
 					try {
 						ResourceLocalServiceUtil.addResources(
-							companyId, 0, ownerId, modelName,
-							String.valueOf(primKey), false, false, false);
+							role.getCompanyId(), groupId, ownerId,
+							verifiableResourcedModel.getModelName(),
+							String.valueOf(primKey), false, addGroupPermission,
+							addGuestPermission);
 					}
 					catch (Exception exception) {
 						_log.error(
 							StringBundler.concat(
-								"Unable to add resource for {", companyId, ", ",
-								modelName, ", ",
+								"Unable to add resource for {",
+								role.getCompanyId(), ", ",
+								verifiableResourcedModel.getModelName(), ", ",
 								ResourceConstants.SCOPE_INDIVIDUAL, ", ",
-								primKey, ", ", roleId, "}"),
+								primKey, ", ", role.getRoleId(), "}"),
 							exception);
 					}
 				},

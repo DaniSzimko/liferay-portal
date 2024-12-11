@@ -22,6 +22,7 @@ import {IRow} from '../../components/SVTable/SVTable';
 import SVAffectedVersions from '../../components/SVTable/components/SVAffectedVersions';
 import {IJiraIssue} from '../../hooks/useJiraIssue';
 import useJiraSearch, {IProps as IJiraSearch} from '../../hooks/useJiraSearch';
+import useJiraVersions from '../../hooks/useJiraVersions';
 import {FILTER_OPTIONS} from '../../utils/constants/filterOptions';
 import {JiraEnum} from '../../utils/constants/jiraEnum';
 import {
@@ -41,6 +42,8 @@ const SecurityVulnerabilitiesList = () => {
 
 	const {jiraSearch, loading, searchParams, updateSearchParams} =
 		useJiraSearch(defaultParams);
+
+	const {jiraVersions} = useJiraVersions();
 
 	const setPage = (page: number) => {
 		updateSearchParams({
@@ -64,12 +67,12 @@ const SecurityVulnerabilitiesList = () => {
 			label: i18n.translate('category'),
 		},
 		{
-			columnKey: 'classification',
+			columnKey: 'issueClassification',
 			label: i18n.translate('classification'),
 		},
 		{
-			columnKey: 'affectedVersions',
-			label: i18n.translate('affected-versions'),
+			columnKey: 'affectedVersion',
+			label: i18n.translate('affected-version'),
 		},
 		{
 			columnKey: 'published',
@@ -80,7 +83,7 @@ const SecurityVulnerabilitiesList = () => {
 	const rows = useMemo(() => {
 		if (jiraSearch?.[JiraEnum.ISSUES]) {
 			return jiraSearch?.[JiraEnum.ISSUES].map((issue: IJiraIssue) => ({
-				affectedVersions: (
+				affectedVersion: (
 					<div>
 						<SVAffectedVersions
 							affectedVersions={
@@ -91,9 +94,11 @@ const SecurityVulnerabilitiesList = () => {
 						/>
 					</div>
 				),
-				category: issue[JiraEnum.FIELDS]?.[JiraEnum.CATEGORY],
-				classification:
-					issue[JiraEnum.FIELDS]?.[JiraEnum.CLASSIFICATION],
+				category: issue[JiraEnum.FIELDS]?.[JiraEnum.CATEGORIES]
+					?.map(String)
+					.join(', '),
+				issueClassification:
+					issue[JiraEnum.FIELDS]?.[JiraEnum.ISSUE_CLASSIFICATION],
 				link: `/${issue?.[JiraEnum.KEY]}`,
 				prioritySummary: (
 					<div>
@@ -157,7 +162,10 @@ const SecurityVulnerabilitiesList = () => {
 					<div className="row sv-table-content">
 						<div className="col-3">
 							<SVFilter
-								filterOptions={FILTER_OPTIONS}
+								filterOptions={{
+									...FILTER_OPTIONS,
+									[JiraEnum.AFFECTED_VERSIONS]: jiraVersions,
+								}}
 								onChange={(params) =>
 									updateSearchParams(params)
 								}

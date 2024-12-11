@@ -29,7 +29,12 @@ const SVTable = ({columns, rows}: IProps) => {
 	const navigate = useNavigate();
 
 	return (
-		<ClayTable borderless className="sv-table table" noWrap striped={false}>
+		<ClayTable
+			borderless
+			className="sv-structured-data sv-table table"
+			noWrap
+			striped={false}
+		>
 			<ClayTable.Head align="left">
 				<ClayTable.Row>
 					{columns.map((column) => (
@@ -48,7 +53,7 @@ const SVTable = ({columns, rows}: IProps) => {
 					<ClayTable.Row
 						className="sv-row"
 						key={index}
-						onClick={() => row.link && navigate(row.link)} // Navigate only if link is present
+						onClick={() => row.link && navigate(row.link)}
 					>
 						{columns.map((column) => (
 							<ClayTable.Cell key={column.columnKey}>

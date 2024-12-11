@@ -1841,6 +1841,10 @@ public class BundleSiteInitializerTest {
 			Validator.isNull(journalArticle3.getDDMTemplateKey()));
 		Assert.assertEquals(
 			"Test Journal Article 3", journalArticle3.getTitle());
+		Assert.assertEquals(
+			LocaleUtil.toLanguageId(
+				_portal.getSiteDefaultLocale(_group.getGroupId())),
+			journalArticle3.getDefaultLanguageId());
 
 		List<JournalFolder> journalFolders = _journalFolderService.getFolders(
 			_group.getGroupId());
@@ -2673,7 +2677,8 @@ public class BundleSiteInitializerTest {
 			).build();
 
 		ObjectDefinition objectDefinition1 =
-			_objectDefinitionLocalService.fetchSystemObjectDefinition("User");
+			_objectDefinitionLocalService.fetchSystemObjectDefinition(
+				TestPropsValues.getCompanyId(), "User");
 
 		Page<ObjectRelationship> page1 =
 			objectRelationshipResource.
@@ -2719,7 +2724,7 @@ public class BundleSiteInitializerTest {
 
 		objectDefinition =
 			_objectDefinitionLocalService.fetchSystemObjectDefinition(
-				"AccountEntry");
+				TestPropsValues.getCompanyId(), "AccountEntry");
 
 		Page<ObjectRelationship> page3 =
 			objectRelationshipResource.
@@ -2754,7 +2759,8 @@ public class BundleSiteInitializerTest {
 			).build();
 
 		ObjectDefinition objectDefinition1 =
-			_objectDefinitionLocalService.fetchSystemObjectDefinition("User");
+			_objectDefinitionLocalService.fetchSystemObjectDefinition(
+				TestPropsValues.getCompanyId(), "User");
 
 		Page<ObjectRelationship> page1 =
 			objectRelationshipResource.
@@ -2800,7 +2806,7 @@ public class BundleSiteInitializerTest {
 
 		objectDefinition =
 			_objectDefinitionLocalService.fetchSystemObjectDefinition(
-				"AccountEntry");
+				TestPropsValues.getCompanyId(), "AccountEntry");
 
 		Page<ObjectRelationship> page3 =
 			objectRelationshipResource.

@@ -129,6 +129,7 @@ public class ObjectEntryRelatedObjectsResourceTest {
 
 		_userSystemObjectDefinition =
 			_objectDefinitionLocalService.fetchSystemObjectDefinition(
+				TestPropsValues.getCompanyId(),
 				_userSystemObjectDefinitionManager.getName());
 	}
 
@@ -767,6 +768,7 @@ public class ObjectEntryRelatedObjectsResourceTest {
 
 		ObjectDefinition relatedObjectDefinition =
 			_objectDefinitionLocalService.fetchSystemObjectDefinition(
+				TestPropsValues.getCompanyId(),
 				_userSystemObjectDefinitionManager.getName());
 
 		// Many to many relationships
@@ -839,6 +841,7 @@ public class ObjectEntryRelatedObjectsResourceTest {
 
 		ObjectDefinition relatedObjectDefinition =
 			_objectDefinitionLocalService.fetchSystemObjectDefinition(
+				TestPropsValues.getCompanyId(),
 				_userSystemObjectDefinitionManager.getName());
 
 		ObjectRelationship objectRelationship = _addObjectRelationship(
@@ -1311,6 +1314,7 @@ public class ObjectEntryRelatedObjectsResourceTest {
 
 		ObjectDefinition relatedObjectDefinition =
 			_objectDefinitionLocalService.fetchSystemObjectDefinition(
+				TestPropsValues.getCompanyId(),
 				_userSystemObjectDefinitionManager.getName());
 
 		// Many to many relationship

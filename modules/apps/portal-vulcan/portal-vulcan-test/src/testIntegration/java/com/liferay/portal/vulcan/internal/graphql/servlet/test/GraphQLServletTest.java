@@ -443,12 +443,7 @@ public class GraphQLServletTest {
 							new GraphQLField("isDeprecated"),
 							new GraphQLField("name"),
 							new GraphQLField(
-								"type",
-								new GraphQLField(
-									"fields",
-									new GraphQLField("deprecationReason"),
-									new GraphQLField("isDeprecated"),
-									new GraphQLField("name")))))),
+								"type", new GraphQLField("name"))))),
 				"query"),
 			"JSONObject/data", "JSONObject/__schema", "JSONObject/mutationType",
 			"JSONArray/fields");
@@ -457,11 +452,24 @@ public class GraphQLServletTest {
 			true, mutationFieldsJSONArray, true, "createTestDTO");
 		_assertGraphQLSchemaField(
 			false, mutationFieldsJSONArray, true, "testPath_v1_0");
+
+		String mutationName = JSONUtil.getValueAsString(
+			_getJSONObject(mutationFieldsJSONArray, "testPath_v1_0"),
+			"JSONObject/type", "Object/name");
+
 		_assertGraphQLSchemaField(
 			false,
 			JSONUtil.getValueAsJSONArray(
-				_getJSONObject(mutationFieldsJSONArray, "testPath_v1_0"),
-				"JSONObject/type", "JSONArray/fields"),
+				_invoke(
+					new GraphQLField(
+						"__type(name: \"" + mutationName + "\")",
+						new GraphQLField(
+							"fields(includeDeprecated: true)",
+							new GraphQLField("deprecationReason"),
+							new GraphQLField("isDeprecated"),
+							new GraphQLField("name"))),
+					"query"),
+				"JSONObject/data", "JSONObject/__type", "JSONArray/fields"),
 			true, "createTestDTO");
 
 		// Query fields
@@ -478,12 +486,7 @@ public class GraphQLServletTest {
 							new GraphQLField("isDeprecated"),
 							new GraphQLField("name"),
 							new GraphQLField(
-								"type",
-								new GraphQLField(
-									"fields",
-									new GraphQLField("deprecationReason"),
-									new GraphQLField("isDeprecated"),
-									new GraphQLField("name")))))),
+								"type", new GraphQLField("name"))))),
 				"query"),
 			"JSONObject/data", "JSONObject/__schema", "JSONObject/queryType",
 			"JSONArray/fields");
@@ -492,9 +495,21 @@ public class GraphQLServletTest {
 		_assertGraphQLSchemaField(
 			true, queryFieldsJSONArray, false, "testDTOPage");
 
-		JSONArray namespacedQueryFieldsJSONArray = JSONUtil.getValueAsJSONArray(
+		String queryName = JSONUtil.getValueAsString(
 			_getJSONObject(queryFieldsJSONArray, "testPath_v1_0"),
-			"JSONObject/type", "JSONArray/fields");
+			"JSONObject/type", "Object/name");
+
+		JSONArray namespacedQueryFieldsJSONArray = JSONUtil.getValueAsJSONArray(
+			_invoke(
+				new GraphQLField(
+					"__type(name: \"" + queryName + "\")",
+					new GraphQLField(
+						"fields(includeDeprecated: true)",
+						new GraphQLField("deprecationReason"),
+						new GraphQLField("isDeprecated"),
+						new GraphQLField("name"))),
+				"query"),
+			"JSONObject/data", "JSONObject/__type", "JSONArray/fields");
 
 		_assertGraphQLSchemaField(
 			false, namespacedQueryFieldsJSONArray, false, "testDTO");

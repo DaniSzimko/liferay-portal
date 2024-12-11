@@ -125,6 +125,15 @@ export default function fieldSetReducer(state, action, config) {
 				);
 			}
 
+			if (fieldSetDDMForm.externalReferenceCode) {
+				fieldSetField = SettingsContext.updateField(
+					props,
+					fieldSetField,
+					'externalReferenceCode',
+					fieldSetDDMForm.externalReferenceCode
+				);
+			}
+
 			if (rows && rows.length) {
 				fieldSetField = SettingsContext.updateField(
 					props,

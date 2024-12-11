@@ -813,6 +813,7 @@ public class ObjectEntryResourceTest {
 
 		_userSystemObjectDefinition =
 			_objectDefinitionLocalService.fetchSystemObjectDefinition(
+				TestPropsValues.getCompanyId(),
 				_systemObjectDefinitionManager.getName());
 
 		_userSystemObjectField = ObjectFieldTestUtil.addCustomObjectField(
@@ -7462,7 +7463,7 @@ public class ObjectEntryResourceTest {
 	}
 
 	@Test
-	public void testPatchSiteScopedObject() throws Exception {
+	public void testPatchSiteScopedCustomObjectEntry() throws Exception {
 		String newObjectFieldValue = RandomTestUtil.randomString();
 
 		JSONObject objectEntryJSONObject = JSONUtil.put(
@@ -8299,7 +8300,7 @@ public class ObjectEntryResourceTest {
 	}
 
 	@Test
-	public void testPostSiteScopedObjectDefinitionInUserGroup()
+	public void testPostSiteScopedCustomObjectEntryInUserGroup()
 		throws Exception {
 
 		UserGroup userGroup = UserGroupTestUtil.addUserGroup();
@@ -9250,6 +9251,53 @@ public class ObjectEntryResourceTest {
 		_assertObjectEntryField(
 			(JSONObject)nestedObjectEntriesJSONArray.get(0),
 			_OBJECT_FIELD_NAME_2, _NEW_OBJECT_FIELD_VALUE_1);
+	}
+
+	@Test
+	public void testPutSiteScopedCustomObjectEntryWithNestedCustomObjectEntries()
+		throws Exception {
+
+		_objectRelationship1 = ObjectRelationshipTestUtil.addObjectRelationship(
+			_siteScopedObjectDefinition1, _siteScopedObjectDefinition2,
+			TestPropsValues.getUserId(),
+			ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+
+		JSONObject postJSONObject = HTTPTestUtil.invokeToJSONObject(
+			JSONUtil.put(
+				_objectRelationship1.getName(),
+				_createObjectEntriesJSONArray(
+					new String[] {_ERC_VALUE_1, _ERC_VALUE_2},
+					_OBJECT_FIELD_NAME_1,
+					new String[] {
+						_NEW_OBJECT_FIELD_VALUE_1, _NEW_OBJECT_FIELD_VALUE_2
+					})
+			).toString(),
+			_getEndpoint(
+				TestPropsValues.getGroupId(), _siteScopedObjectDefinition1),
+			Http.Method.POST);
+
+		JSONObject putJSONObject = HTTPTestUtil.invokeToJSONObject(
+			JSONUtil.put(
+				_OBJECT_FIELD_NAME_1, _OBJECT_FIELD_VALUE_1
+			).put(
+				_objectRelationship1.getName(),
+				_createObjectEntriesJSONArray(
+					new String[] {_ERC_VALUE_3}, _OBJECT_FIELD_NAME_2,
+					new String[] {_NEW_OBJECT_FIELD_VALUE_2})
+			).toString(),
+			_siteScopedObjectDefinition1.getRESTContextPath() + "/" +
+				postJSONObject.getLong("id"),
+			Http.Method.PUT);
+
+		Assert.assertEquals(
+			_ERC_VALUE_3,
+			putJSONObject.getJSONArray(
+				_objectRelationship1.getName()
+			).getJSONObject(
+				0
+			).getString(
+				"externalReferenceCode"
+			));
 	}
 
 	@Test

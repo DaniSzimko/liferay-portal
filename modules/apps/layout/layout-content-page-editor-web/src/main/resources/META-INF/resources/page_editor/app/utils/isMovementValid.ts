@@ -8,6 +8,7 @@ import {openToast, sub} from 'frontend-js-web';
 import {LayoutData, LayoutDataItem} from '../../types/layout_data/LayoutData';
 import {FragmentEntryLinkMap} from '../actions/addFragmentEntryLinks';
 import {WidgetSet} from '../actions/updateWidgets';
+import {LAYOUT_DATA_ITEM_TYPES} from '../config/constants/layoutDataItemTypes';
 import selectLayoutDataItemLabel from '../selectors/selectLayoutDataItemLabel';
 import checkAllowedChild, {
 	MovementItem,
@@ -21,6 +22,7 @@ type Props = {
 	onInvalid?: () => {};
 	sources: Array<MovementItem>;
 	targetId: LayoutDataItem['itemId'];
+	type?: 'drop' | 'paste';
 };
 
 export function isMovementValid({
@@ -30,8 +32,13 @@ export function isMovementValid({
 	onInvalid,
 	sources,
 	targetId,
+	type = 'paste',
 }: Props) {
-	const target = toMovementItem(targetId, layoutData, fragmentEntryLinks);
+	const target = toMovementItem(
+		type === 'paste' ? getPasteTargetId(targetId, layoutData) : targetId,
+		layoutData,
+		fragmentEntryLinks
+	);
 
 	// Return false if target not found (for example if target is an editable)
 
@@ -56,7 +63,7 @@ export function isMovementValid({
 
 		// Skip iteration if it is
 
-		if (valid === true) {
+		if (valid) {
 			continue;
 		}
 
@@ -153,4 +160,56 @@ export function isMovementValid({
 	}
 
 	return true;
+}
+
+const VALID_PASTE_TYPES: Array<LayoutDataItem['type']> = [
+	LAYOUT_DATA_ITEM_TYPES.column,
+	LAYOUT_DATA_ITEM_TYPES.container,
+	LAYOUT_DATA_ITEM_TYPES.collection,
+	LAYOUT_DATA_ITEM_TYPES.dropZone,
+	LAYOUT_DATA_ITEM_TYPES.form,
+	LAYOUT_DATA_ITEM_TYPES.formStep,
+	LAYOUT_DATA_ITEM_TYPES.root,
+];
+
+export function getPasteTargetId(
+	targetId: LayoutDataItem['itemId'],
+	layoutData: LayoutData
+): string {
+	const target = layoutData.items[targetId];
+	const items = layoutData.items;
+
+	// Return first step id for multistep forms
+
+	if (
+		target.type === LAYOUT_DATA_ITEM_TYPES.form &&
+		target.config.formType === 'multistep'
+	) {
+		for (const childId of target.children) {
+			const child = items[childId];
+
+			if (child.type === LAYOUT_DATA_ITEM_TYPES.formStepContainer) {
+				return items[child.children[0]].itemId;
+			}
+		}
+	}
+
+	// Return collection item id for mapped collections
+
+	if (
+		target.type === LAYOUT_DATA_ITEM_TYPES.collection &&
+		target.config.collection
+	) {
+		return target.children[0];
+	}
+
+	// Return parent id if the item is not a valid paste target
+
+	if (!VALID_PASTE_TYPES.includes(target.type)) {
+		return target.parentId;
+	}
+
+	// Otherwise return the id of the item itself
+
+	return target.itemId;
 }

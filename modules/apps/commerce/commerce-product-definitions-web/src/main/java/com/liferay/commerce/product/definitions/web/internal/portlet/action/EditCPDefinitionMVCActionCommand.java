@@ -687,6 +687,48 @@ public class EditCPDefinitionMVCActionCommand extends BaseMVCActionCommand {
 		_cpdAvailabilityEstimateService.updateCPDAvailabilityEstimate(
 			cpdAvailabilityEstimateEntryId, cpDefinitionId,
 			commerceAvailabilityEstimateId);
+	}
+
+	private void _updateMasterConfiguration(
+			ActionRequest actionRequest, long cpDefinitionId)
+		throws Exception {
+
+		long cpTaxCategoryId = ParamUtil.getLong(
+			actionRequest, "cpTaxCategoryId");
+		String allowedOrderQuantities = ParamUtil.getString(
+			actionRequest, "allowedOrderQuantities");
+		boolean backOrders = ParamUtil.getBoolean(actionRequest, "backOrders");
+		long commerceAvailabilityEstimateId = ParamUtil.getLong(
+			actionRequest, "commerceAvailabilityEstimateId");
+		String cpDefinitionInventoryEngine = ParamUtil.getString(
+			actionRequest, "CPDefinitionInventoryEngine");
+		double depth = ParamUtil.getDouble(actionRequest, "depth");
+		boolean displayAvailability = ParamUtil.getBoolean(
+			actionRequest, "displayAvailability");
+		boolean displayStockQuantity = ParamUtil.getBoolean(
+			actionRequest, "displayStockQuantity");
+		boolean freeShipping = ParamUtil.getBoolean(
+			actionRequest, "freeShipping");
+		double height = ParamUtil.getDouble(actionRequest, "height");
+		String lowStockActivity = ParamUtil.getString(
+			actionRequest, "lowStockActivity");
+		BigDecimal maxOrderQuantity = _commerceOrderItemQuantityFormatter.parse(
+			actionRequest, "maxOrderQuantity");
+		BigDecimal minOrderQuantity = _commerceOrderItemQuantityFormatter.parse(
+			actionRequest, "minOrderQuantity");
+		BigDecimal minStockQuantity = _commerceOrderItemQuantityFormatter.parse(
+			actionRequest, "minStockQuantity");
+		BigDecimal multipleOrderQuantity =
+			_commerceOrderItemQuantityFormatter.parse(
+				actionRequest, "multipleOrderQuantity");
+		boolean shippable = ParamUtil.getBoolean(actionRequest, "shippable");
+		double shippingExtraPrice = ParamUtil.getDouble(
+			actionRequest, "shippingExtraPrice");
+		boolean shipSeparately = ParamUtil.getBoolean(
+			actionRequest, "shipSeparately");
+		boolean taxExempt = ParamUtil.getBoolean(actionRequest, "taxExempt");
+		double weight = ParamUtil.getDouble(actionRequest, "weight");
+		double width = ParamUtil.getDouble(actionRequest, "width");
 
 		CPDefinition cpDefinition = _cpDefinitionService.getCPDefinition(
 			cpDefinitionId);
@@ -702,22 +744,25 @@ public class EditCPDefinitionMVCActionCommand extends BaseMVCActionCommand {
 				null, cpDefinition.getGroupId(),
 				_portal.getClassNameId(CPDefinition.class), cpDefinitionId,
 				masterCPConfigurationList.getCPConfigurationListId(),
-				allowedOrderQuantities, backOrders,
+				cpTaxCategoryId, allowedOrderQuantities, backOrders,
 				commerceAvailabilityEstimateId, cpDefinitionInventoryEngine,
-				displayAvailability, displayStockQuantity, lowStockActivity,
-				maxOrderQuantity, minOrderQuantity, minStockQuantity,
-				multipleOrderQuantity);
+				depth, displayAvailability, displayStockQuantity, freeShipping,
+				height, lowStockActivity, maxOrderQuantity, minOrderQuantity,
+				minStockQuantity, multipleOrderQuantity, true, shippable,
+				shippingExtraPrice, shipSeparately, taxExempt, true, weight,
+				width);
 		}
 		else {
 			_cpConfigurationEntryService.updateCPConfigurationEntry(
 				cpConfigurationEntry.getExternalReferenceCode(),
 				cpConfigurationEntry.getCPConfigurationEntryId(),
-				cpConfigurationEntry.getCPConfigurationListId(),
-				allowedOrderQuantities, backOrders,
+				cpTaxCategoryId, allowedOrderQuantities, backOrders,
 				commerceAvailabilityEstimateId, cpDefinitionInventoryEngine,
-				displayAvailability, displayStockQuantity, lowStockActivity,
-				maxOrderQuantity, minOrderQuantity, minStockQuantity,
-				multipleOrderQuantity);
+				depth, displayAvailability, displayStockQuantity, freeShipping,
+				height, lowStockActivity, maxOrderQuantity, minOrderQuantity,
+				minStockQuantity, multipleOrderQuantity, true, shippable,
+				shippingExtraPrice, shipSeparately, taxExempt, true, weight,
+				width);
 		}
 	}
 
@@ -935,6 +980,7 @@ public class EditCPDefinitionMVCActionCommand extends BaseMVCActionCommand {
 			long cpDefinitionId = _cpDefinition.getCPDefinitionId();
 
 			_updateCPDefinitionInventory(_actionRequest, cpDefinitionId);
+			_updateMasterConfiguration(_actionRequest, cpDefinitionId);
 			_updateShippingInfo(_actionRequest, cpDefinitionId);
 			_updateTaxCategoryInfo(_actionRequest, cpDefinitionId);
 

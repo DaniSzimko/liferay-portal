@@ -94,7 +94,11 @@ const UNMAPPED_FORM_ITEM = {
 	type: LAYOUT_DATA_ITEM_TYPES.form,
 };
 
-const renderComponent = ({item = MAPPED_FORM_ITEM, successMessage} = {}) => {
+const renderComponent = ({
+	item = MAPPED_FORM_ITEM,
+	successMessage,
+	fragmentEntryLinks,
+} = {}) => {
 	const mockDispatch = jest.fn((a) => {
 		if (typeof a === 'function') {
 			return a(mockDispatch, () => state);
@@ -107,6 +111,7 @@ const renderComponent = ({item = MAPPED_FORM_ITEM, successMessage} = {}) => {
 	};
 
 	const state = {
+		fragmentEntryLinks: {...fragmentEntryLinks},
 		languageId: 'en_US',
 		layoutData: {
 			items: {
