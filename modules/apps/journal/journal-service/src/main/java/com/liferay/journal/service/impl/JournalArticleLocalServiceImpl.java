@@ -1382,7 +1382,7 @@ public class JournalArticleLocalServiceImpl
 		if (articleResource != null) {
 			_systemEventLocalService.addSystemEvent(
 				0, article.getGroupId(), article.getModelClassName(),
-				article.getPrimaryKey(), articleResource.getUuid(), null,
+				article.getPrimaryKey(), articleResource.getUuid(), StringPool.BLANK, null,
 				SystemEventConstants.TYPE_DELETE,
 				JSONUtil.put(
 					"assetTitle",
@@ -1469,7 +1469,7 @@ public class JournalArticleLocalServiceImpl
 		if (articleResource != null) {
 			_systemEventLocalService.addSystemEvent(
 				0, groupId, JournalArticle.class.getName(),
-				articleResource.getResourcePrimKey(), articleResource.getUuid(),
+				articleResource.getResourcePrimKey(), articleResource.getUuid(), StringPool.BLANK,
 				null, SystemEventConstants.TYPE_DELETE,
 				JSONUtil.put(
 					"assetTitle", assetTitle
@@ -1526,7 +1526,7 @@ public class JournalArticleLocalServiceImpl
 		for (JournalArticleResource articleResource : articleResources) {
 			_systemEventLocalService.addSystemEvent(
 				0, groupId, JournalArticle.class.getName(),
-				articleResource.getResourcePrimKey(), articleResource.getUuid(),
+				articleResource.getResourcePrimKey(), articleResource.getUuid(), StringPool.BLANK,
 				null, SystemEventConstants.TYPE_DELETE, StringPool.BLANK);
 		}
 	}
@@ -1600,7 +1600,7 @@ public class JournalArticleLocalServiceImpl
 		for (JournalArticleResource articleResource : articleResources) {
 			_systemEventLocalService.addSystemEvent(
 				0, groupId, JournalArticle.class.getName(),
-				articleResource.getResourcePrimKey(), articleResource.getUuid(),
+				articleResource.getResourcePrimKey(), articleResource.getUuid(), StringPool.BLANK,
 				null, SystemEventConstants.TYPE_DELETE, StringPool.BLANK);
 		}
 	}
