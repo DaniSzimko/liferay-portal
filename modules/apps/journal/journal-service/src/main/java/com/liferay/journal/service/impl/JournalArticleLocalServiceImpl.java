@@ -1382,8 +1382,8 @@ public class JournalArticleLocalServiceImpl
 		if (articleResource != null) {
 			_systemEventLocalService.addSystemEvent(
 				0, article.getGroupId(), article.getModelClassName(),
-				article.getPrimaryKey(), articleResource.getUuid(), StringPool.BLANK, null,
-				SystemEventConstants.TYPE_DELETE,
+				article.getPrimaryKey(), articleResource.getUuid(),
+				StringPool.BLANK, null, SystemEventConstants.TYPE_DELETE,
 				JSONUtil.put(
 					"assetTitle",
 					article.getTitle(article.getDefaultLanguageId())
@@ -1469,8 +1469,8 @@ public class JournalArticleLocalServiceImpl
 		if (articleResource != null) {
 			_systemEventLocalService.addSystemEvent(
 				0, groupId, JournalArticle.class.getName(),
-				articleResource.getResourcePrimKey(), articleResource.getUuid(), StringPool.BLANK,
-				null, SystemEventConstants.TYPE_DELETE,
+				articleResource.getResourcePrimKey(), articleResource.getUuid(),
+				StringPool.BLANK, null, SystemEventConstants.TYPE_DELETE,
 				JSONUtil.put(
 					"assetTitle", assetTitle
 				).toString());
@@ -1526,8 +1526,9 @@ public class JournalArticleLocalServiceImpl
 		for (JournalArticleResource articleResource : articleResources) {
 			_systemEventLocalService.addSystemEvent(
 				0, groupId, JournalArticle.class.getName(),
-				articleResource.getResourcePrimKey(), articleResource.getUuid(), StringPool.BLANK,
-				null, SystemEventConstants.TYPE_DELETE, StringPool.BLANK);
+				articleResource.getResourcePrimKey(), articleResource.getUuid(),
+				StringPool.BLANK, null, SystemEventConstants.TYPE_DELETE,
+				StringPool.BLANK);
 		}
 	}
 
@@ -1600,8 +1601,9 @@ public class JournalArticleLocalServiceImpl
 		for (JournalArticleResource articleResource : articleResources) {
 			_systemEventLocalService.addSystemEvent(
 				0, groupId, JournalArticle.class.getName(),
-				articleResource.getResourcePrimKey(), articleResource.getUuid(), StringPool.BLANK,
-				null, SystemEventConstants.TYPE_DELETE, StringPool.BLANK);
+				articleResource.getResourcePrimKey(), articleResource.getUuid(),
+				StringPool.BLANK, null, SystemEventConstants.TYPE_DELETE,
+				StringPool.BLANK);
 		}
 	}
 
