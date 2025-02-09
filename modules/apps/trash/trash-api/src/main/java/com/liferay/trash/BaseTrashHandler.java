@@ -58,8 +58,8 @@ public abstract class BaseTrashHandler implements TrashHandler {
 
 		return SystemEventLocalServiceUtil.addSystemEvent(
 			userId, groupId, getSystemEventClassName(), classPK, classUuid,
-			referrerClassName, SystemEventConstants.TYPE_DELETE,
-			extraDataJSONObject.toString());
+			StringPool.BLANK, referrerClassName,
+			SystemEventConstants.TYPE_DELETE, extraDataJSONObject.toString());
 	}
 
 	@Override

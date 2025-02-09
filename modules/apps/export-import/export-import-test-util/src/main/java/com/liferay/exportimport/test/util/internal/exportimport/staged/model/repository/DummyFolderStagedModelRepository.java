@@ -85,8 +85,8 @@ public class DummyFolderStagedModelRepository
 			systemEventLocalService.addSystemEvent(
 				0, dummyFolder.getGroupId(), dummyFolder.getModelClassName(),
 				dummyFolder.getPrimaryKey(), dummyFolder.getUuid(),
-				StringPool.BLANK, SystemEventConstants.TYPE_DELETE,
-				StringPool.BLANK);
+				StringPool.BLANK, StringPool.BLANK,
+				SystemEventConstants.TYPE_DELETE, StringPool.BLANK);
 		}
 	}
 

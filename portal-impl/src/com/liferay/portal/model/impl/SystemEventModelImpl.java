@@ -68,7 +68,9 @@ public class SystemEventModelImpl
 		{"companyId", Types.BIGINT}, {"userId", Types.BIGINT},
 		{"userName", Types.VARCHAR}, {"createDate", Types.TIMESTAMP},
 		{"classNameId", Types.BIGINT}, {"classPK", Types.BIGINT},
-		{"classUuid", Types.VARCHAR}, {"referrerClassNameId", Types.BIGINT},
+		{"classUuid", Types.VARCHAR},
+		{"classExternalReferenceCode", Types.VARCHAR},
+		{"referrerClassNameId", Types.BIGINT},
 		{"parentSystemEventId", Types.BIGINT},
 		{"systemEventSetKey", Types.BIGINT}, {"type_", Types.INTEGER},
 		{"extraData", Types.CLOB}
@@ -89,6 +91,7 @@ public class SystemEventModelImpl
 		TABLE_COLUMNS_MAP.put("classNameId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("classPK", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("classUuid", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("classExternalReferenceCode", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("referrerClassNameId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("parentSystemEventId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("systemEventSetKey", Types.BIGINT);
@@ -97,7 +100,7 @@ public class SystemEventModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table SystemEvent (mvccVersion LONG default 0 not null,ctCollectionId LONG default 0 not null,systemEventId LONG not null,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,classNameId LONG,classPK LONG,classUuid VARCHAR(75) null,referrerClassNameId LONG,parentSystemEventId LONG,systemEventSetKey LONG,type_ INTEGER,extraData TEXT null,primary key (systemEventId, ctCollectionId))";
+		"create table SystemEvent (mvccVersion LONG default 0 not null,ctCollectionId LONG default 0 not null,systemEventId LONG not null,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,classNameId LONG,classPK LONG,classUuid VARCHAR(75) null,classExternalReferenceCode VARCHAR(75) null,referrerClassNameId LONG,parentSystemEventId LONG,systemEventSetKey LONG,type_ INTEGER,extraData TEXT null,primary key (systemEventId, ctCollectionId))";
 
 	public static final String TABLE_SQL_DROP = "drop table SystemEvent";
 
@@ -286,6 +289,9 @@ public class SystemEventModelImpl
 			attributeGetterFunctions.put(
 				"classUuid", SystemEvent::getClassUuid);
 			attributeGetterFunctions.put(
+				"classExternalReferenceCode",
+				SystemEvent::getClassExternalReferenceCode);
+			attributeGetterFunctions.put(
 				"referrerClassNameId", SystemEvent::getReferrerClassNameId);
 			attributeGetterFunctions.put(
 				"parentSystemEventId", SystemEvent::getParentSystemEventId);
@@ -343,6 +349,10 @@ public class SystemEventModelImpl
 			attributeSetterBiConsumers.put(
 				"classUuid",
 				(BiConsumer<SystemEvent, String>)SystemEvent::setClassUuid);
+			attributeSetterBiConsumers.put(
+				"classExternalReferenceCode",
+				(BiConsumer<SystemEvent, String>)
+					SystemEvent::setClassExternalReferenceCode);
 			attributeSetterBiConsumers.put(
 				"referrerClassNameId",
 				(BiConsumer<SystemEvent, Long>)
@@ -596,6 +606,27 @@ public class SystemEventModelImpl
 	}
 
 	@Override
+	public String getClassExternalReferenceCode() {
+		if (_classExternalReferenceCode == null) {
+			return "";
+		}
+		else {
+			return _classExternalReferenceCode;
+		}
+	}
+
+	@Override
+	public void setClassExternalReferenceCode(
+		String classExternalReferenceCode) {
+
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_classExternalReferenceCode = classExternalReferenceCode;
+	}
+
+	@Override
 	public long getReferrerClassNameId() {
 		return _referrerClassNameId;
 	}
@@ -757,6 +788,8 @@ public class SystemEventModelImpl
 		systemEventImpl.setClassNameId(getClassNameId());
 		systemEventImpl.setClassPK(getClassPK());
 		systemEventImpl.setClassUuid(getClassUuid());
+		systemEventImpl.setClassExternalReferenceCode(
+			getClassExternalReferenceCode());
 		systemEventImpl.setReferrerClassNameId(getReferrerClassNameId());
 		systemEventImpl.setParentSystemEventId(getParentSystemEventId());
 		systemEventImpl.setSystemEventSetKey(getSystemEventSetKey());
@@ -793,6 +826,8 @@ public class SystemEventModelImpl
 			this.<Long>getColumnOriginalValue("classPK"));
 		systemEventImpl.setClassUuid(
 			this.<String>getColumnOriginalValue("classUuid"));
+		systemEventImpl.setClassExternalReferenceCode(
+			this.<String>getColumnOriginalValue("classExternalReferenceCode"));
 		systemEventImpl.setReferrerClassNameId(
 			this.<Long>getColumnOriginalValue("referrerClassNameId"));
 		systemEventImpl.setParentSystemEventId(
@@ -920,6 +955,18 @@ public class SystemEventModelImpl
 			systemEventCacheModel.classUuid = null;
 		}
 
+		systemEventCacheModel.classExternalReferenceCode =
+			getClassExternalReferenceCode();
+
+		String classExternalReferenceCode =
+			systemEventCacheModel.classExternalReferenceCode;
+
+		if ((classExternalReferenceCode != null) &&
+			(classExternalReferenceCode.length() == 0)) {
+
+			systemEventCacheModel.classExternalReferenceCode = null;
+		}
+
 		systemEventCacheModel.referrerClassNameId = getReferrerClassNameId();
 
 		systemEventCacheModel.parentSystemEventId = getParentSystemEventId();
@@ -1008,6 +1055,7 @@ public class SystemEventModelImpl
 	private long _classNameId;
 	private long _classPK;
 	private String _classUuid;
+	private String _classExternalReferenceCode;
 	private long _referrerClassNameId;
 	private long _parentSystemEventId;
 	private long _systemEventSetKey;
@@ -1055,6 +1103,8 @@ public class SystemEventModelImpl
 		_columnOriginalValues.put("classNameId", _classNameId);
 		_columnOriginalValues.put("classPK", _classPK);
 		_columnOriginalValues.put("classUuid", _classUuid);
+		_columnOriginalValues.put(
+			"classExternalReferenceCode", _classExternalReferenceCode);
 		_columnOriginalValues.put("referrerClassNameId", _referrerClassNameId);
 		_columnOriginalValues.put("parentSystemEventId", _parentSystemEventId);
 		_columnOriginalValues.put("systemEventSetKey", _systemEventSetKey);
@@ -1105,15 +1155,17 @@ public class SystemEventModelImpl
 
 		columnBitmasks.put("classUuid", 1024L);
 
-		columnBitmasks.put("referrerClassNameId", 2048L);
+		columnBitmasks.put("classExternalReferenceCode", 2048L);
 
-		columnBitmasks.put("parentSystemEventId", 4096L);
+		columnBitmasks.put("referrerClassNameId", 4096L);
 
-		columnBitmasks.put("systemEventSetKey", 8192L);
+		columnBitmasks.put("parentSystemEventId", 8192L);
 
-		columnBitmasks.put("type_", 16384L);
+		columnBitmasks.put("systemEventSetKey", 16384L);
 
-		columnBitmasks.put("extraData", 32768L);
+		columnBitmasks.put("type_", 32768L);
+
+		columnBitmasks.put("extraData", 65536L);
 
 		_columnBitmasks = Collections.unmodifiableMap(columnBitmasks);
 	}

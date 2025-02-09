@@ -40,8 +40,8 @@ public class SystemEventLocalServiceImpl
 	@Override
 	public SystemEvent addSystemEvent(
 			long userId, long groupId, String className, long classPK,
-			String classUuid, String referrerClassName, int type,
-			String extraData)
+			String classUuid, String classExternalReferenceCode,
+			String referrerClassName, int type, String extraData)
 		throws PortalException {
 
 		if (userId == 0) {
@@ -65,18 +65,21 @@ public class SystemEventLocalServiceImpl
 
 		return addSystemEvent(
 			userId, companyId, groupId, className, classPK, classUuid,
-			referrerClassName, type, extraData, userName);
+			classExternalReferenceCode, referrerClassName, type, extraData,
+			userName);
 	}
 
 	@Override
 	public SystemEvent addSystemEvent(
 			long companyId, String className, long classPK, String classUuid,
-			String referrerClassName, int type, String extraData)
+			String classExternalReferenceCode, String referrerClassName,
+			int type, String extraData)
 		throws PortalException {
 
 		return addSystemEvent(
-			0, companyId, 0, className, classPK, classUuid, referrerClassName,
-			type, extraData, StringPool.BLANK);
+			0, companyId, 0, className, classPK, classUuid,
+			classExternalReferenceCode, referrerClassName, type, extraData,
+			StringPool.BLANK);
 	}
 
 	@Override
@@ -160,8 +163,9 @@ public class SystemEventLocalServiceImpl
 
 	protected SystemEvent addSystemEvent(
 			long userId, long companyId, long groupId, String className,
-			long classPK, String classUuid, String referrerClassName, int type,
-			String extraData, String userName)
+			long classPK, String classUuid, String classExternalReferenceCode,
+			String referrerClassName, int type, String extraData,
+			String userName)
 		throws PortalException {
 
 		SystemEventHierarchyEntry systemEventHierarchyEntry =
@@ -220,6 +224,7 @@ public class SystemEventLocalServiceImpl
 		systemEvent.setClassName(className);
 		systemEvent.setClassPK(classPK);
 		systemEvent.setClassUuid(classUuid);
+		systemEvent.setClassExternalReferenceCode(classExternalReferenceCode);
 		systemEvent.setReferrerClassName(referrerClassName);
 
 		long parentSystemEventId = 0;

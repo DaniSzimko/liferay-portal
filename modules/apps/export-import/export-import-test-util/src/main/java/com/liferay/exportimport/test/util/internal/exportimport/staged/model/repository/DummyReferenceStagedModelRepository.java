@@ -83,8 +83,8 @@ public class DummyReferenceStagedModelRepository
 				0, dummyReference.getGroupId(),
 				dummyReference.getModelClassName(),
 				dummyReference.getPrimaryKey(), dummyReference.getUuid(),
-				StringPool.BLANK, SystemEventConstants.TYPE_DELETE,
-				StringPool.BLANK);
+				StringPool.BLANK, StringPool.BLANK,
+				SystemEventConstants.TYPE_DELETE, StringPool.BLANK);
 		}
 	}
 

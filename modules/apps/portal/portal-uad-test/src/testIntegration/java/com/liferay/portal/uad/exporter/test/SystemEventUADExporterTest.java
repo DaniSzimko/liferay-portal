@@ -45,8 +45,8 @@ public class SystemEventUADExporterTest
 		SystemEvent systemEvent = _systemEventLocalService.addSystemEvent(
 			userId, TestPropsValues.getGroupId(), Group.class.getName(),
 			RandomTestUtil.nextLong(), PortalUUIDUtil.generate(),
-			StringPool.BLANK, SystemEventConstants.TYPE_DELETE,
-			StringPool.BLANK);
+			StringPool.BLANK, StringPool.BLANK,
+			SystemEventConstants.TYPE_DELETE, StringPool.BLANK);
 
 		_systemEvents.add(systemEvent);
 

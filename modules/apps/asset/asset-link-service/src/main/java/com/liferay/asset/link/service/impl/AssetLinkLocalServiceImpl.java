@@ -572,7 +572,8 @@ public class AssetLinkLocalServiceImpl extends AssetLinkLocalServiceBaseImpl {
 			_systemEventLocalService.addSystemEvent(
 				0, assetEntry.getGroupId(), stagedModelType.getClassName(),
 				stagedAssetLink.getPrimaryKey(), stagedAssetLink.getUuid(),
-				null, SystemEventConstants.TYPE_DELETE, StringPool.BLANK);
+				StringPool.BLANK, null, SystemEventConstants.TYPE_DELETE,
+				StringPool.BLANK);
 		}
 		catch (PortalException portalException) {
 			throw new RuntimeException(portalException);

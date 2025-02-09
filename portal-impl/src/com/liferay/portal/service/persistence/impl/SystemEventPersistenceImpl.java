@@ -3124,6 +3124,7 @@ public class SystemEventPersistenceImpl
 		ctStrictColumnNames.add("classNameId");
 		ctStrictColumnNames.add("classPK");
 		ctMergeColumnNames.add("classUuid");
+		ctMergeColumnNames.add("classExternalReferenceCode");
 		ctMergeColumnNames.add("referrerClassNameId");
 		ctMergeColumnNames.add("parentSystemEventId");
 		ctMergeColumnNames.add("systemEventSetKey");

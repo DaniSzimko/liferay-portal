@@ -160,9 +160,8 @@ public class TestrayImporter {
 				_getJenkinsBuildDescriptionElement(
 					testrayBuildTitle, testrayBuild.getName(),
 					String.valueOf(testrayBuild.getURL())),
-				_getJenkinsBuildDescriptionElement(
-					"Testray Build ID",
-					"`" + String.valueOf(testrayBuild.getID()) + "`"));
+				_getJenkinsBuildDescriptionCodeElement(
+					"Testray Build ID", String.valueOf(testrayBuild.getID())));
 
 			i++;
 		}
@@ -736,6 +735,22 @@ public class TestrayImporter {
 					}
 				}
 			}
+
+			try {
+				Properties buildProperties =
+					JenkinsResultsParserUtil.getBuildProperties();
+
+				String testrayOverrideProjectName = buildProperties.getProperty(
+					"testray.override.project.name");
+
+				if (testrayOverrideProjectName != null) {
+					testrayProject = testrayServer.getTestrayProjectByName(
+						_replaceEnvVars(testrayOverrideProjectName, true));
+				}
+			}
+			catch (IOException ioException) {
+				throw new RuntimeException(ioException);
+			}
 		}
 		finally {
 			if (testrayProject != null) {
@@ -839,6 +854,22 @@ public class TestrayImporter {
 					testrayRoutine = testrayProject.createTestrayRoutine(
 						_replaceEnvVars(testrayRoutineName, true));
 				}
+			}
+
+			try {
+				Properties buildProperties =
+					JenkinsResultsParserUtil.getBuildProperties();
+
+				String testrayOverrideRoutineName = buildProperties.getProperty(
+					"testray.override.routine.name");
+
+				if (testrayOverrideRoutineName != null) {
+					testrayRoutine = testrayProject.createTestrayRoutine(
+						_replaceEnvVars(testrayRoutineName, true));
+				}
+			}
+			catch (IOException ioException) {
+				throw new RuntimeException(ioException);
 			}
 		}
 		finally {
@@ -1432,7 +1463,7 @@ public class TestrayImporter {
 			return;
 		}
 
-		Properties buildProperties;
+		Properties buildProperties = null;
 
 		try {
 			buildProperties = JenkinsResultsParserUtil.getBuildProperties();
@@ -1531,7 +1562,7 @@ public class TestrayImporter {
 			return;
 		}
 
-		Properties buildProperties;
+		Properties buildProperties = null;
 
 		try {
 			buildProperties = JenkinsResultsParserUtil.getBuildProperties();
@@ -1587,6 +1618,30 @@ public class TestrayImporter {
 		return buildParameters.get(buildParameterName);
 	}
 
+	private Element _getJenkinsBuildDescriptionCodeElement(
+		String title, String name) {
+
+		Document document = DocumentHelper.createDocument();
+
+		Element element = document.addElement("code");
+
+		Element titleElement = element.addElement("strong");
+
+		titleElement.addText(title + ":");
+
+		Element spaceElement = element.addElement("span");
+
+		spaceElement.addText(" ");
+
+		Element codeElement = element.addElement("code");
+
+		codeElement.addText(name);
+
+		element.addElement("br");
+
+		return element;
+	}
+
 	private Element _getJenkinsBuildDescriptionElement(
 		String title, String name) {
 
@@ -1624,7 +1679,7 @@ public class TestrayImporter {
 	}
 
 	private GitWorkingDirectory _getJenkinsGitWorkingDirectory() {
-		Properties buildProperties;
+		Properties buildProperties = null;
 
 		try {
 			buildProperties = JenkinsResultsParserUtil.getBuildProperties();

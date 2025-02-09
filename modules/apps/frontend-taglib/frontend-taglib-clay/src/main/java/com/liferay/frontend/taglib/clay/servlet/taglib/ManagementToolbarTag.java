@@ -745,8 +745,7 @@ public class ManagementToolbarTag extends BaseContainerTag {
 		}
 
 		jspWriter.write(
-			"\"><div class=\"container-fluid container-fluid-max-xl");
-		jspWriter.write("\"><ul class=\"navbar-nav\">");
+			"\"><div class=\"container-fluid\"><ul class=\"navbar-nav\">");
 
 		ResourceBundle resourceBundle = TagResourceBundleUtil.getResourceBundle(
 			pageContext);
@@ -1032,8 +1031,7 @@ public class ManagementToolbarTag extends BaseContainerTag {
 		if (!active && isShowSearch()) {
 			jspWriter.write("<div class=\"navbar-form navbar-form-autofit ");
 			jspWriter.write(" navbar-overlay navbar-overlay-sm-down\"><div");
-			jspWriter.write(" class=\"container-fluid container-fluid-max-xl");
-			jspWriter.write("\"><form");
+			jspWriter.write(" class=\"container-fluid\"><form");
 
 			String searchActionURL = getSearchActionURL();
 
@@ -1204,9 +1202,8 @@ public class ManagementToolbarTag extends BaseContainerTag {
 		if (isShowResultsBar()) {
 			jspWriter.write("<nav class=\"subnav-tbar subnav-tbar-primary");
 			jspWriter.write(" tbar tbar-inline-xs-down\"><div class=\"");
-			jspWriter.write("container-fluid container-fluid-max-xl \">");
-			jspWriter.write("<ul class=\"tbar-nav tbar-nav-wrap\">");
-			jspWriter.write("<li class=\"tbar-item");
+			jspWriter.write("container-fluid\"><ul class=\"tbar-nav ");
+			jspWriter.write("tbar-nav-wrap\"><li class=\"tbar-item");
 
 			List<LabelItem> filterLabelItems = getFilterLabelItems();
 

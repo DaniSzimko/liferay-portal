@@ -83,7 +83,8 @@ public class DummyStagedModelRepository
 			systemEventLocalService.addSystemEvent(
 				0, dummy.getGroupId(), dummy.getModelClassName(),
 				dummy.getPrimaryKey(), dummy.getUuid(), StringPool.BLANK,
-				SystemEventConstants.TYPE_DELETE, StringPool.BLANK);
+				StringPool.BLANK, SystemEventConstants.TYPE_DELETE,
+				StringPool.BLANK);
 		}
 	}
 

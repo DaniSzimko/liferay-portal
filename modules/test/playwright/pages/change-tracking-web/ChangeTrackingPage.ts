@@ -132,6 +132,30 @@ export class ChangeTrackingPage {
 		await this.deleteComment(editedComment);
 	}
 
+	async assertStatus(status: string, title: string) {
+		await this.goToPublicationHistory();
+
+		await this.page
+			.locator('.fds tbody tr')
+			.filter({
+				has: this.page.getByText(title),
+			})
+			.filter({
+				has: this.page.getByText(status, {exact: true}),
+			})
+			.waitFor();
+
+		await this.page
+			.locator('.fds tbody tr')
+			.filter({
+				has: this.page.getByText(title),
+			})
+			.filter({
+				has: this.page.getByText(status, {exact: true}),
+			})
+			.isVisible();
+	}
+
 	async deleteComment(comment) {
 		const commentsDiv = this.page.locator('div.publications-comments');
 
@@ -379,6 +403,43 @@ export class ChangeTrackingPage {
 			await expect(publicationsEnabled).toBeChecked();
 
 			await expect(checkBox).not.toBeChecked();
+		}
+	}
+
+	async viewChanges({changed, site, title, type}) {
+		if (changed) {
+			await this.page
+				.locator('.fds tbody tr')
+				.filter({
+					has: this.page.getByText(title),
+				})
+				.filter({
+					has: this.page.getByRole('cell', {name: changed}),
+				})
+				.isVisible();
+		}
+
+		if (site) {
+			await this.page
+				.locator('.fds tbody tr')
+				.filter({
+					has: this.page.getByText(title),
+				})
+				.filter({
+					has: this.page.getByRole('cell', {name: site}),
+				})
+				.isVisible();
+		}
+		if (type) {
+			await this.page
+				.locator('.fds tbody tr')
+				.filter({
+					has: this.page.getByText(title),
+				})
+				.filter({
+					has: this.page.getByRole('cell', {name: type}),
+				})
+				.isVisible();
 		}
 	}
 
