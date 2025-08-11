@@ -1,0 +1,11 @@
+{
+	"object-entries": [
+		{
+			"description": "Lightweight titanium frame"
+		},
+		{
+			"description": "Flexible memory metal construction"
+		}
+	],
+	"objectDefinitionName": "FrameFeature"
+}

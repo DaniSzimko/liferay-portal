@@ -1,0 +1,11 @@
+{
+	"object-entries": [
+		{
+			"name": "Classic"
+		},
+		{
+			"name": "Modern"
+		}
+	],
+	"objectDefinitionName": "FrameCollection"
+}
