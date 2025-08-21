@@ -1,9 +1,11 @@
 {
 	"object-entries": [
 		{
+			"externalReferenceCode": "CLASSIC_FRAME_COLLECTION",
 			"name": "Classic"
 		},
 		{
+			"externalReferenceCode": "MODERN_FRAME_COLLECTION",
 			"name": "Modern"
 		}
 	],
