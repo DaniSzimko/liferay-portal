@@ -42,6 +42,8 @@ public class LayoutModelDocumentContributor
 			return;
 		}
 
+		document.addKeyword(
+			Field.EXTERNAL_REFERENCE_CODE, layout.getExternalReferenceCode());
 		document.addText(
 			Field.DEFAULT_LANGUAGE_ID, layout.getDefaultLanguageId());
 		document.addLocalizedText(Field.NAME, layout.getNameMap());
