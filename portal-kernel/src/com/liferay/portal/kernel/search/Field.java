@@ -102,6 +102,8 @@ public class Field implements Serializable {
 
 	public static final String EXPIRATION_DATE = "expirationDate";
 
+	public static final String EXTERNAL_REFERENCE_CODE = "externalReferenceCode";
+
 	public static final String FOLDER_ID = "folderId";
 
 	public static final String GEO_LOCATION = "geoLocation";
