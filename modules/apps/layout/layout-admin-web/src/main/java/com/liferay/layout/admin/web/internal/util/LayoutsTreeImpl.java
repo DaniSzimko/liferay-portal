@@ -432,6 +432,8 @@ public class LayoutsTreeImpl implements LayoutsTree {
 				return null;
 			}
 		).put(
+			"externalReferenceCode", layout.getExternalReferenceCode()
+		).put(
 			"firstPageable", layoutType.isFirstPageable()
 		).put(
 			"groupId",
