@@ -77,7 +77,7 @@ public class PageTemplateSetResourceImpl
 
 			@Override
 			public String getItemClassName() {
-				return LayoutPageTemplateCollection.class.getName();
+				return PageTemplateSet.class.getName();
 			}
 
 			@Override

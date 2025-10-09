@@ -117,7 +117,7 @@ public class DisplayPageTemplateResourceImpl
 
 			@Override
 			public String getItemClassName() {
-				return LayoutPageTemplateEntry.class.getName();
+				return DisplayPageTemplate.class.getName();
 			}
 
 			@Override

@@ -95,7 +95,7 @@ public class MasterPageResourceImpl
 
 			@Override
 			public String getItemClassName() {
-				return LayoutPageTemplateEntry.class.getName();
+				return MasterPage.class.getName();
 			}
 
 			@Override

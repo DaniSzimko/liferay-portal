@@ -80,7 +80,7 @@ public class DisplayPageTemplateFolderResourceImpl
 
 			@Override
 			public String getItemClassName() {
-				return LayoutPageTemplateCollection.class.getName();
+				return DisplayPageTemplateFolder.class.getName();
 			}
 
 			@Override
