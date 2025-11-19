@@ -6,19 +6,13 @@
 package com.liferay.object.rest.internal.jaxrs.container.request.filter;
 
 import com.liferay.object.model.ObjectDefinition;
-import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
-import com.liferay.object.tree.Edge;
-import com.liferay.object.tree.Node;
-import com.liferay.object.tree.ObjectDefinitionTreeFactory;
-import com.liferay.object.tree.Tree;
+import com.liferay.object.tree.RootModelHierarchyNestedFieldsUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.vulcan.fields.NestedFieldsContext;
 import com.liferay.portal.vulcan.fields.NestedFieldsContextThreadLocal;
-import com.liferay.portal.vulcan.util.NestedFieldsContextUtil;
 
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
@@ -26,10 +20,6 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.ext.Provider;
 
 import java.io.IOException;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * @author Carlos Correa
@@ -57,69 +47,11 @@ public class NestedFieldsContainerRequestFilter
 			return;
 		}
 
-		List<String> nestedFields = new ArrayList<>(
-			nestedFieldsContext.getNestedFields());
-
-		if (!nestedFields.contains("rootModelHierarchy")) {
-			return;
-		}
-
-		int treeHeight = 1;
-
-		try {
-			ObjectDefinitionTreeFactory objectDefinitionTreeFactory =
-				new ObjectDefinitionTreeFactory(
-					_objectDefinitionLocalService,
-					_objectRelationshipLocalService);
-
-			Tree tree = objectDefinitionTreeFactory.create(
-				_objectDefinition.getObjectDefinitionId());
-
-			treeHeight += tree.getHeight(tree.getRootNode());
-
-			Iterator<Node> iterator = tree.iterator();
-
-			while (iterator.hasNext()) {
-				Node node = iterator.next();
-
-				List<Node> childNodes = node.getChildNodes();
-
-				if (ListUtil.isEmpty(childNodes)) {
-					continue;
-				}
-
-				for (int i = childNodes.size() - 1; i >= 0; i--) {
-					Node childNode = childNodes.get(i);
-
-					Edge edge = childNode.getEdge();
-
-					if (edge == null) {
-						continue;
-					}
-
-					ObjectRelationship objectRelationship =
-						_objectRelationshipLocalService.getObjectRelationship(
-							edge.getObjectRelationshipId());
-
-					nestedFields.add(objectRelationship.getName());
-				}
-			}
-		}
-		catch (Exception exception) {
-			_log.error(exception);
-
-			return;
-		}
-
-		ListUtil.distinct(nestedFields);
-
 		NestedFieldsContextThreadLocal.setNestedFieldsContext(
-			new NestedFieldsContext(
-				NestedFieldsContextUtil.limitDepth(treeHeight),
-				nestedFieldsContext.getMessage(), nestedFields,
-				nestedFieldsContext.getPathParameters(),
-				nestedFieldsContext.getQueryParameters(),
-				nestedFieldsContext.getResourceVersion()));
+			RootModelHierarchyNestedFieldsUtil.customize(
+				nestedFieldsContext, _objectDefinition,
+				_objectDefinitionLocalService, _objectRelationshipLocalService,
+				_log));
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

@@ -28,6 +28,7 @@ import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.service.ObjectRelationshipService;
 import com.liferay.object.system.SystemObjectDefinitionManagerRegistry;
+import com.liferay.object.tree.RootModelHierarchyNestedFieldsUtil;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
@@ -40,14 +41,18 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.vulcan.aggregation.Aggregation;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
+import com.liferay.portal.vulcan.fields.NestedFieldsContext;
+import com.liferay.portal.vulcan.fields.NestedFieldsContextThreadLocal;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
+import com.liferay.portal.vulcan.util.NestedFieldsContextUtil;
 
 import jakarta.ws.rs.NotSupportedException;
 import jakarta.ws.rs.core.Context;
@@ -57,6 +62,7 @@ import jakarta.ws.rs.core.Response;
 import java.io.Serializable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -423,11 +429,13 @@ public class ObjectEntryResourceImpl
 
 			@Override
 			public List<String> getNestedFields() {
-				return transform(
-					_objectRelationshipLocalService.
-						getObjectRelationshipsByObjectDefinitionId2(
-							_objectDefinition.getObjectDefinitionId()),
-					ObjectRelationshipModel::getName);
+				return ListUtil.concat(
+					Collections.singletonList("rootModelHierarchy"),
+					transform(
+						_objectRelationshipLocalService.
+							getObjectRelationshipsByObjectDefinitionId2(
+								_objectDefinition.getObjectDefinitionId()),
+						ObjectRelationshipModel::getName));
 			}
 
 			@Override
@@ -1252,17 +1260,47 @@ public class ObjectEntryResourceImpl
 			Map<String, Serializable> parameters, String search)
 		throws Exception {
 
-		ObjectScopeProvider objectScopeProvider =
-			_objectScopeProviderRegistry.getObjectScopeProvider(
-				_objectDefinition.getScope());
+		NestedFieldsContext oldNestedFieldsContext = null;
+		NestedFieldsContext newNestedFieldsContext = null;
 
-		if (objectScopeProvider.isGroupAware()) {
-			return getScopeScopeKeyPage(
-				_getScopeKey(parameters), search, null, filter, pagination,
-				sorts);
+		try {
+			if (contextHttpServletRequest == null) {
+				newNestedFieldsContext =
+					_buildNestedFieldsContextFromParameters(parameters);
+
+				if (newNestedFieldsContext != null) {
+					newNestedFieldsContext =
+						RootModelHierarchyNestedFieldsUtil.customize(
+							newNestedFieldsContext, _objectDefinition,
+							_objectDefinitionLocalService,
+							_objectRelationshipLocalService, _log);
+
+					oldNestedFieldsContext =
+						NestedFieldsContextThreadLocal.
+							getAndSetNestedFieldsContext(
+								newNestedFieldsContext);
+				}
+			}
+
+			ObjectScopeProvider objectScopeProvider =
+				_objectScopeProviderRegistry.getObjectScopeProvider(
+					_objectDefinition.getScope());
+
+			if (objectScopeProvider.isGroupAware()) {
+				return getScopeScopeKeyPage(
+					_getScopeKey(parameters), search, null, filter, pagination,
+					sorts);
+			}
+
+			return getObjectEntriesPage(
+				search, null, filter, pagination, sorts);
 		}
-
-		return getObjectEntriesPage(search, null, filter, pagination, sorts);
+		finally {
+			if (newNestedFieldsContext != null) {
+				NestedFieldsContextThreadLocal.setNestedFieldsContext(
+					oldNestedFieldsContext);
+			}
+		}
 	}
 
 	public void setObjectDefinition(ObjectDefinition objectDefinition) {
@@ -1308,6 +1346,46 @@ public class ObjectEntryResourceImpl
 		if (objectEntry.getStatus() != null) {
 			existingObjectEntry.setStatus(objectEntry::getStatus);
 		}
+	}
+
+	private NestedFieldsContext _buildNestedFieldsContextFromParameters(
+		Map<String, Serializable> parameters) {
+
+		if (parameters == null) {
+			return null;
+		}
+
+		Serializable nestedFieldsParam = parameters.get("nestedFields");
+
+		if (nestedFieldsParam == null) {
+			nestedFieldsParam = parameters.get("batchNestedFields");
+		}
+
+		if (nestedFieldsParam == null) {
+			return null;
+		}
+
+		List<String> nestedFields = NestedFieldsContextUtil.toList(
+			String.valueOf(nestedFieldsParam));
+
+		if (nestedFields.isEmpty()) {
+			return null;
+		}
+
+		Serializable depthParam = parameters.get("nestedFieldsDepth");
+
+		int depth;
+
+		if (depthParam != null) {
+			depth = NestedFieldsContextUtil.limitDepth(
+				GetterUtil.getInteger(String.valueOf(depthParam)));
+		}
+		else {
+			depth = NestedFieldsContextUtil.limitDepth(
+				PropsValues.OBJECT_NESTED_FIELDS_MAX_QUERY_DEPTH);
+		}
+
+		return new NestedFieldsContext(depth, nestedFields);
 	}
 
 	private DefaultDTOConverterContext _getDTOConverterContext(
